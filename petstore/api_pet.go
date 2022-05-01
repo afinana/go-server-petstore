@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -121,22 +122,30 @@ func FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
 func GetPetById(w http.ResponseWriter, r *http.Request) {
 
+	var result Pet
 	vars := mux.Vars(r)
 
-	id, err := strconv.ParseInt(vars["id"], 10, 32)
+	id, err := strconv.ParseInt(vars["petId"], 10, 32)
 	if err != nil {
+		fmt.Printf("Parsed int is %d\n", id)
 		panic(err)
 	}
 	fmt.Printf("Parsed int is %d\n", id)
 
 	for _, pet := range Pets {
 		if pet.Id == id {
+			result = pet
 			json.NewEncoder(w).Encode(pet)
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	if reflect.ValueOf(result).IsZero() {
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+
 }
 
 func UpdatePet(w http.ResponseWriter, r *http.Request) {
