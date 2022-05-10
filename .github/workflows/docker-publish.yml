@@ -68,5 +68,5 @@ jobs:
         with:
           context: .          
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ USER_ACCOUNT }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.USER_ACCOUNT }}/${{ env.IMAGE_NAME }}:latest
     
