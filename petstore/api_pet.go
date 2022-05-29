@@ -135,7 +135,7 @@ func GetPetById(w http.ResponseWriter, r *http.Request) {
 	for _, pet := range Pets {
 		if pet.Id == id {
 			result = pet
-			json.NewEncoder(w).Encode(pet)
+
 		}
 	}
 
@@ -143,7 +143,8 @@ func GetPetById(w http.ResponseWriter, r *http.Request) {
 	if reflect.ValueOf(result).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(result)
+
 	}
 
 }
