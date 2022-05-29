@@ -22,4 +22,9 @@ To run the server, follow these simple steps:
 ```
 go run main.go
 ```
+## Running with Docker
 
+``` sh
+docker -t go-server-petstore build .
+docker run --name go-petstore  -p 8090:8080  go-server-petstore
+```
