@@ -12,10 +12,9 @@ package petstore
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
-
-	"github.com/gorilla/mux"
 )
 
 type Route struct {
