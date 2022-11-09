@@ -13,39 +13,31 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 /*
 Pet:{
    Id int64 `json:"id,omitempty"`
-
 	Category *Category `json:"category,omitempty"`
-
 	Name string `json:"name"`
-
 	PhotoUrls []string `json:"photoUrls"`
-
 	Tags []Tag `json:"tags,omitempty"`
-
 	// pet status in the store
 	Status string `json:"status,omitempty"`
 }
 
 Category {
 	Id int64 `json:"id,omitempty"`
-
 	Name string `json:"name,omitempty"`
 }
 Tag
 {
 	Id int64 `json:"id,omitempty"`
-
 	Name string `json:"name,omitempty"`
 }
 
@@ -65,10 +57,10 @@ func AddPet(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var pet Pet
 	json.Unmarshal(reqBody, &pet)
+
 	// update our global Pets array to include
 	// our new Pet
 	Pets = append(Pets, pet)
-
 	json.NewEncoder(w).Encode(pet)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
