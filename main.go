@@ -11,22 +11,87 @@
 package main
 
 import (
+	"context"
+	"flag"
+	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	api "middleland.net/swaggerapi/petstore"
 	"net/http"
-
-	api "middleland.net/petstore"
-	// WARNING!
-	// Change this to a fully-qualified import path
-	// once you place this file into your project.
-	// For example,
-	//
-	//    sw "github.com/myname/myrepo/go"
-	//
+	"os"
+	"time"
 )
 
 func main() {
-	log.Printf("Go Server started")
 
-	router := api.NewRouter()
-	log.Fatal(http.ListenAndServe(":8090", router))
+	// Define command-line flags
+	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
+	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
+	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
+	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
+	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
+	flag.Parse()
+
+	// Create logger for writing information and error messages.
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	// Create mongo client configuration
+	co := options.Client().ApplyURI(*mongoURI)
+	if *enableCredentials {
+		co.Auth = &options.Credential{
+			Username: os.Getenv("MONGODB_USERNAME"),
+			Password: os.Getenv("MONGODB_PASSWORD"),
+		}
+	}
+
+	// Establish database connection
+	client, err := mongo.NewClient(co)
+	if err != nil {
+		errLog.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	err = client.Connect(ctx)
+	if err != nil {
+		errLog.Fatal(err)
+	}
+
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+
+	infoLog.Printf("Database connection established")
+	app := api.NewLog(
+		infoLog,
+		errLog,
+		&api.PetModel{
+			C: client.Database(*mongoDatabase).Collection("pets"),
+		},
+		&api.StoreModel{
+			C: client.Database(*mongoDatabase).Collection("stores"),
+		},
+		&api.UserModel{
+			C: client.Database(*mongoDatabase).Collection("users"),
+		},
+	)
+
+	// Initialize a new http.Server struct.
+	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
+	srv := &http.Server{
+		Addr:         serverURI,
+		ErrorLog:     errLog,
+		Handler:      app.NewRouter(),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	infoLog.Printf("Starting server on %s", serverURI)
+	err = srv.ListenAndServe()
+	errLog.Fatal(err)
 }
