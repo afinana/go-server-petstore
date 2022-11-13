@@ -22,7 +22,7 @@ import (
 
 var Users []User
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("CreateUser:: start")
 	// get the body of our POST request
@@ -37,21 +37,21 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	Users = append(Users, user)
 	json.NewEncoder(w).Encode(user)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 
@@ -67,12 +67,12 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
 }
 
-func GetUserByName(w http.ResponseWriter, r *http.Request) {
+func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	var result User
 	vars := mux.Vars(r)
 
@@ -86,7 +86,7 @@ func GetUserByName(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	if reflect.ValueOf(result).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
@@ -95,17 +95,17 @@ func GetUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LoginUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func LogoutUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }

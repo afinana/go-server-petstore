@@ -22,7 +22,7 @@ import (
 
 var Orders []Order
 
-func DeleteOrder(w http.ResponseWriter, r *http.Request) {
+func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 
@@ -38,22 +38,22 @@ func DeleteOrder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
 }
 
-func GetInventory(w http.ResponseWriter, r *http.Request) {
+func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("GetInventory:: return all orders")
 	json.NewEncoder(w).Encode(Orders)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
 }
 
-func GetOrderById(w http.ResponseWriter, r *http.Request) {
+func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 	var result Order
 	vars := mux.Vars(r)
 
@@ -71,7 +71,7 @@ func GetOrderById(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	if reflect.ValueOf(result).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
@@ -80,7 +80,7 @@ func GetOrderById(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func PlaceOrder(w http.ResponseWriter, r *http.Request) {
+func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
@@ -94,6 +94,6 @@ func PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	Orders = append(Orders, order)
 	json.NewEncoder(w).Encode(order)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
