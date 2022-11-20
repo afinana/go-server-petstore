@@ -11,45 +11,101 @@
 package petstore
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
+	"reflect"
+	"strconv"
 )
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+var Users []User
+
+func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Printf("CreateUser:: start")
+	// get the body of our POST request
+	// unmarshal this into a new Article struct
+	// append this to our Articles array.
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var user User
+	json.Unmarshal(reqBody, &user)
+
+	// update our global Pets array to include
+	// our new Pet
+	Users = append(Users, user)
+	json.NewEncoder(w).Encode(user)
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	id, err := strconv.ParseInt(vars["id"], 10, 32)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("DeleteUser::id is %d\n", id)
+
+	for index, user := range Orders {
+		if user.Id == id {
+			Users = append(Users[:index], Users[index+1:]...)
+		}
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+}
+
+func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
+	var result User
+	vars := mux.Vars(r)
+
+	name := vars["name"]
+	fmt.Printf("GetUserByName name: %d\n", name)
+
+	for _, user := range Users {
+		if user.Username == name {
+			result = user
+
+		}
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	if reflect.ValueOf(result).IsZero() {
+		w.WriteHeader(http.StatusNotFound)
+	} else {
+		json.NewEncoder(w).Encode(result)
+
+	}
+}
+
+func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetUserByName(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func LoginUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func LogoutUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }

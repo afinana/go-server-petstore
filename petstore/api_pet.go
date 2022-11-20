@@ -12,171 +12,162 @@ package petstore
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"reflect"
-	"strconv"
-
-	"github.com/gorilla/mux"
+	"strings"
 )
 
-/*
-Pet:{
-   Id int64 `json:"id,omitempty"`
+func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
-	Category *Category `json:"category,omitempty"`
-
-	Name string `json:"name"`
-
-	PhotoUrls []string `json:"photoUrls"`
-
-	Tags []Tag `json:"tags,omitempty"`
-
-	// pet status in the store
-	Status string `json:"status,omitempty"`
-}
-
-Category {
-	Id int64 `json:"id,omitempty"`
-
-	Name string `json:"name,omitempty"`
-}
-Tag
-{
-	Id int64 `json:"id,omitempty"`
-
-	Name string `json:"name,omitempty"`
-}
-
-*/
-var Pets []Pet = []Pet{
-	{Id: 1, Category: &Category{Id: 1, Name: "category01"}, Name: "dog", PhotoUrls: []string{},
-		Tags: []Tag{{Id: 1, Name: " tag01"}}, Status: "fine"},
-	{Id: 2, Category: &Category{Id: 2, Name: "category02"}, Name: "cat", PhotoUrls: []string{},
-		Tags: []Tag{{Id: 2, Name: "tag02"}}, Status: "fine"},
-}
-
-func AddPet(w http.ResponseWriter, r *http.Request) {
-
-	// get the body of our POST request
-	// unmarshal this into a new Article struct
-	// append this to our Articles array.
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var pet Pet
-	json.Unmarshal(reqBody, &pet)
-	// update our global Pets array to include
-	// our new Pet
-	Pets = append(Pets, pet)
-
-	json.NewEncoder(w).Encode(pet)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func DeletePet(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-
-	id, err := strconv.ParseInt(vars["id"], 10, 32)
+	// Define Pets model
+	var m Pet
+	// Get request information
+	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Parsed int is %d\n", id)
-
-	for index, pet := range Pets {
-		if pet.Id == id {
-			Pets = append(Pets[:index], Pets[index+1:]...)
-		}
+		app.serverError(w, err)
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
-
-	status := r.URL.Query().Get("status")
-	var result []Pet
-	fmt.Println("Endpoint Hit: FindPetsByStatus %\n ", status)
-	for index, pet := range Pets {
-		if pet.Status == status {
-			fmt.Printf("Found pet in position: %d\n", index)
-			result = append(result, pet)
-		}
-	}
-	json.NewEncoder(w).Encode(result)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func FindPetsByTags(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("Endpoint Hit: FindPetsByTags deprecated")
-	json.NewEncoder(w).Encode(Pets)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func GetPetById(w http.ResponseWriter, r *http.Request) {
-
-	var result Pet
-	vars := mux.Vars(r)
-
-	id, err := strconv.ParseInt(vars["petId"], 10, 32)
+	// Insert new Pets
+	insertResult, err := app.pets.Insert(m)
 	if err != nil {
-		fmt.Printf("Parsed int is %d\n", id)
-		panic(err)
+		app.serverError(w, err)
 	}
-	fmt.Printf("Parsed int is %d\n", id)
+	m.ID = insertResult.InsertedID.(primitive.ObjectID)
 
-	for _, pet := range Pets {
-		if pet.Id == id {
-			result = pet
-			json.NewEncoder(w).Encode(pet)
+	app.infoLog.Printf("New pet have been created, id=%s", insertResult.InsertedID)
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(m)
+
+}
+
+func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
+
+	// Get id from incoming url
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	// Delete Pets by id
+	deleteResult, err := app.pets.Delete(id)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	app.infoLog.Printf("Have been eliminated %d pet(s)", deleteResult.DeletedCount)
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	//w.WriteHeader(http.StatusOK)
+}
+
+func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
+
+	status_query := r.URL.Query().Get("status")
+	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s \n", status_query)
+
+	var model []Pet
+	status := strings.Split(status_query, ",")
+
+	// Find Pets by id
+	model, err := app.pets.FindByStatus(status)
+	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.infoLog.Println("Pets not found")
+			return
 		}
+		// Any other error will send an internal server error
+		app.serverError(w, err)
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	if reflect.ValueOf(result).IsZero() {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(model)
+	//w.WriteHeader(http.StatusOK)
+}
+
+func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
+
+	tag_query := r.URL.Query().Get("tags")
+	app.infoLog.Println("Endpoint Hit: FindPetsByTags %s \n", tag_query)
+
+	var model []Pet
+	tags := strings.Split(tag_query, ",")
+
+	// Find Pets by id
+	model, err := app.pets.FindBytags(tags)
+	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.infoLog.Println("Pets not found")
+			return
+		}
+		// Any other error will send an internal server error
+		app.serverError(w, err)
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(model)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
+
+	// Get id from incoming url
+	vars := mux.Vars(r)
+	id := vars["petId"]
+
+	app.infoLog.Printf("Get pet by id=%s \n", id)
+
+	// Find Pets by id
+	model, err := app.pets.FindByID(id)
+	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.infoLog.Println("Pets not found")
+			return
+		}
+		// Any other error will send an internal server error
+		app.serverError(w, err)
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	if reflect.ValueOf(model).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
+		json.NewEncoder(w).Encode(model)
 		w.WriteHeader(http.StatusOK)
 	}
 
 }
 
-func UpdatePet(w http.ResponseWriter, r *http.Request) {
+func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 
-	// get the body of our POST request
-	// unmarshal this into a new Article struct
-	// append this to our Articles array.
-	reqBody, err := ioutil.ReadAll(r.Body)
+	// Define Pets model
+	var m Pet
+	// Get request information
+	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		panic(err)
-	}
-	var pet Pet
-	json.Unmarshal(reqBody, &pet)
-
-	for index, pet := range Pets {
-		if int(pet.Id) == index {
-			Pets[index] = pet
-		}
+		app.serverError(w, err)
 	}
 
-	json.NewEncoder(w).Encode(pet)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	//m.ID = bson.ObjectIdHex(id)
+
+	// Insert new Pets
+	insertResult, err := app.pets.Update(m)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(m)
 	w.WriteHeader(http.StatusOK)
 }
 
-func UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func UploadFile(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+func (app *Application) UploadFile(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }

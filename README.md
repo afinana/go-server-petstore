@@ -1,4 +1,5 @@
-# Go API Server for swagger (202205161933)
+# Go API Server- Mongo db version for swagget (1.0.1)
+
 
 This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.
 
@@ -22,4 +23,20 @@ To run the server, follow these simple steps:
 ```
 go run main.go
 ```
+## Running with Docker
 
+``` sh
+docker -t go-server-petstore build .
+docker run --name go-petstore  -p 8090:8080  go-server-petstore
+```
+
+# Mongo DB queries examples
+
+``` sh
+db.getCollection('pets').find({"category.id": {$lt: 2 }})
+
+db.getCollection('pets').find({"category.id": 1, status: "pending" })
+
+db.getCollection('pets').find( {tags: { $elemMatch : { name : "tag01" }}})
+
+```
