@@ -16,36 +16,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"reflect"
+	"strings"
 )
-
-/*
-Pet:{
-   Id int64 `json:"id,omitempty"`
-	Category *Category `json:"category,omitempty"`
-	Name string `json:"name"`
-	PhotoUrls []string `json:"photoUrls"`
-	Tags []Tag `json:"tags,omitempty"`
-	// pet status in the store
-	Status string `json:"status,omitempty"`
-}
-
-Category {
-	Id int64 `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
-}
-Tag
-{
-	Id int64 `json:"id,omitempty"`
-	Name string `json:"name,omitempty"`
-}
-
-*/
-var Pets []Pet = []Pet{
-	{Id: 1, Category: &Category{Id: 1, Name: "category01"}, Name: "dog", PhotoUrls: []string{},
-		Tags: []Tag{{Id: 1, Name: " tag01"}}, Status: "fine"},
-	{Id: 2, Category: &Category{Id: 2, Name: "category02"}, Name: "cat", PhotoUrls: []string{},
-		Tags: []Tag{{Id: 2, Name: "tag02"}}, Status: "fine"},
-}
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
@@ -65,10 +37,9 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	m.ID = insertResult.InsertedID.(primitive.ObjectID)
 
 	app.infoLog.Printf("New pet have been created, id=%s", insertResult.InsertedID)
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(m)
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
@@ -86,15 +57,17 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Printf("Have been eliminated %d pet(s)", deleteResult.DeletedCount)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
 
-	status := r.URL.Query().Get("status")
-	app.infoLog.Println("Endpoint Hit: FindPetsByStatus %\n ", status)
+	status_query := r.URL.Query().Get("status")
+	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s \n", status_query)
 
 	var model []Pet
+	status := strings.Split(status_query, ",")
+
 	// Find Pets by id
 	model, err := app.pets.FindByStatus(status)
 	if err != nil {
@@ -106,17 +79,32 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 		app.serverError(w, err)
 	}
 
-	json.NewEncoder(w).Encode(model)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model)
+	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
-	app.infoLog.Println("Endpoint Hit: FindPetsByTags deprecated")
-	json.NewEncoder(w).Encode(Pets)
+	tag_query := r.URL.Query().Get("tags")
+	app.infoLog.Println("Endpoint Hit: FindPetsByTags %s \n", tag_query)
+
+	var model []Pet
+	tags := strings.Split(tag_query, ",")
+
+	// Find Pets by id
+	model, err := app.pets.FindBytags(tags)
+	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.infoLog.Println("Pets not found")
+			return
+		}
+		// Any other error will send an internal server error
+		app.serverError(w, err)
+	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(model)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -126,7 +114,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["petId"]
 
-	app.infoLog.Printf("Get pet by id=%s", id)
+	app.infoLog.Printf("Get pet by id=%s \n", id)
 
 	// Find Pets by id
 	model, err := app.pets.FindByID(id)
@@ -144,16 +132,12 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		json.NewEncoder(w).Encode(model)
-
+		w.WriteHeader(http.StatusOK)
 	}
 
 }
 
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
-
-	// Get id from incoming url
-	//vars := mux.Vars(r)
-	//id := vars["id"]
 
 	// Define Pets model
 	var m Pet
@@ -171,10 +155,10 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 	}
 
-	app.infoLog.Printf("New pet have been created, id=%s", insertResult.InsertedID)
+	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)
 
-	json.NewEncoder(w).Encode(m)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(m)
 	w.WriteHeader(http.StatusOK)
 }
 

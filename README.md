@@ -28,3 +28,14 @@ go run main.go
 docker -t go-server-petstore build .
 docker run --name go-petstore  -p 8090:8080  go-server-petstore
 ```
+
+# Mongo DB queries examples
+
+``` sh
+db.getCollection('pets').find({"category.id": {$lt: 2 }})
+
+db.getCollection('pets').find({"category.id": 1, status: "pending" })
+
+db.getCollection('pets').find( {tags: { $elemMatch : { name : "tag01" }}})
+
+```

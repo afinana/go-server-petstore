@@ -27,7 +27,7 @@ func main() {
 
 	// Define command-line flags
 	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
+	serverPort := flag.Int("serverPort", 8080, "HTTP server network port")
 	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
 	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
 	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
