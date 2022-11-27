@@ -13,19 +13,20 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: docker.io
-  # github.repository as <account>/<repo>
-  USER_ACCOUNT: middleland
-  IMAGE_NAME: go-server-petstore
+
 
 
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    env:
+      # Use docker.io for Docker Hub if empty
+      REGISTRY: docker.io
+      # github.repository as <account>/<repo>
+      USER_ACCOUNT: middleland
+      IMAGE_NAME: go-server-petstore
+      
     permissions:
       contents: read
       packages: write
