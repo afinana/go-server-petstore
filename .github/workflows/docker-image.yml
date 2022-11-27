@@ -13,24 +13,22 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: docker.io
-  # github.repository as <account>/<repo>
-  USER_ACCOUNT: middleland
-  IMAGE_NAME: go-server-petstore
-
 
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    env:
+      # Use docker.io for Docker Hub if empty
+      REGISTRY: docker.io
+      # github.repository as <account>/<repo>
+      USER_ACCOUNT: middleland
+      IMAGE_NAME: go-server-petstore
+      
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
+      # This is used to complete the identity challenge  
       id-token: write
 
     steps:
@@ -48,7 +46,7 @@ jobs:
         uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
           registry: ${{ env.REGISTRY }}
-          username:  ${{ secrets.DOCKERHUB_USERNAME }}
+          username:  ${{ env.USER_ACCOUNT }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       # Extract metadata (tags, labels) for Docker

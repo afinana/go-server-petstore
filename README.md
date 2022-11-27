@@ -1,4 +1,5 @@
-# Go API Server- Mongo db version for swagget (1.0.1)
+# Go API Server- Mongo db version for swagger (1.0.1)
+
 
 This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.
 
@@ -13,7 +14,7 @@ To see how to make this your own, look here:
 [README](https://github.com/swagger-api/swagger-codegen/blob/master/README.md)
 
 - API version: 1.0.6
-- Build date: 2022-04-08T16:44:07.696Z
+- Build date: 2022-11-27T23:27:07.696Z
 
 
 ### Running the server
