@@ -4,6 +4,9 @@
 FROM golang:1.16-buster AS build
 
 WORKDIR /app
+# Download Go modules
+COPY go.mod .
+COPY go.sum .
 
 # Copy the source code. Note the slash at the end, as explained in
 # https://docs.docker.com/engine/reference/builder/#copy
