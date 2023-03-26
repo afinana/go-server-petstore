@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ## Build
-FROM golang:1.17-buster AS build
+FROM golang:1.18-buster AS build
 
 WORKDIR /app
 # Download Go modules
