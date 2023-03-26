@@ -11,7 +11,7 @@ type Application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	pets     *PetModel
-	stores   *StoreModel
+	orders   *OrderModel
 	users    *UserModel
 }
 
@@ -28,10 +28,10 @@ func (app *Application) clientError(w http.ResponseWriter, status int) {
 }
 
 func NewLog(inLog *log.Logger, errLog *log.Logger,
-	pets *PetModel, stores *StoreModel, users *UserModel) *Application {
+	pets *PetModel, orders *OrderModel, users *UserModel) *Application {
 
 	// Initialize a new instance of application containing the dependencies.
-	app := &Application{errorLog: errLog, infoLog: inLog, pets: pets, stores: stores, users: users}
+	app := &Application{errorLog: errLog, infoLog: inLog, pets: pets, orders: orders, users: users}
 	return app
 
 }
