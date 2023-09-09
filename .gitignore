@@ -1,0 +1,7 @@
+/.project
+/.idea
+/target
+/.swagger-codegen-ignore
+/.classpath
+/.swagger-codegen
+/*.iml
