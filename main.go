@@ -14,13 +14,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	api "middleland.net/swaggerapi/petstore"
 	"net/http"
 	"os"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	api "middleland.net/swaggerapi/petstore"
 )
 
 func main() {
@@ -66,6 +67,14 @@ func main() {
 	}()
 
 	infoLog.Printf("Database connection established")
+
+	if err != nil {
+		return
+	}
+	if err != nil {
+		return
+	}
+
 	app := api.NewLog(
 		infoLog,
 		errLog,

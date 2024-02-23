@@ -12,15 +12,21 @@ package petstore
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	// Define Pets model
 	var m Pet
 	// Get request information
@@ -38,12 +44,18 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("New pet have been created, id=%s", insertResult.InsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(m)
 
 }
 
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	// Get id from incoming url
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -55,13 +67,18 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.infoLog.Printf("Have been eliminated %d pet(s)", deleteResult.DeletedCount)
-
+	app.enableCors(&w, r)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	status_query := r.URL.Query().Get("status")
 	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s \n", status_query)
 
@@ -80,14 +97,20 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(model)
 	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	tag_query := r.URL.Query().Get("tags")
-	app.infoLog.Println("Endpoint Hit: FindPetsByTags %s \n", tag_query)
+	app.infoLog.Printf("Endpoint Hit: FindPetsByTags %s \n", tag_query)
 
 	var model []Pet
 	tags := strings.Split(tag_query, ",")
@@ -105,11 +128,17 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(model)
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	// Get id from incoming url
 	vars := mux.Vars(r)
 	id := vars["petId"]
@@ -128,6 +157,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	if reflect.ValueOf(model).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
@@ -139,6 +169,11 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	// Define Pets model
 	var m Pet
 	// Get request information
@@ -158,16 +193,29 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(m)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UploadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }

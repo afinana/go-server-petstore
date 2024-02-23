@@ -3,6 +3,7 @@ package petstore
 import (
 	"context"
 	"errors"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -77,7 +78,7 @@ func (m *StoreModel) FindByStatus(status string) ([]Pet, error) {
 
 	// begin find
 
-	filter := bson.D{{"status", status}}
+	filter := bson.D{{Key: "status", Value: status}}
 	cursor, err := m.C.Find(context.TODO(), filter)
 	if err != nil {
 		panic(err)
@@ -98,7 +99,7 @@ func (m *StoreModel) FindBytags(tags []string) ([]Pet, error) {
 
 	// begin find
 
-	filter := bson.D{{"tag", tags[0]}}
+	filter := bson.D{{Key: "tag", Value: tags[0]}}
 	cursor, err := m.C.Find(context.TODO(), filter)
 	if err != nil {
 		panic(err)

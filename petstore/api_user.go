@@ -13,11 +13,12 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 var Users []User
@@ -28,7 +29,7 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
-	reqBody, _ := ioutil.ReadAll(r.Body)
+	reqBody, _ := io.ReadAll(r.Body)
 	var user User
 	json.Unmarshal(reqBody, &user)
 
@@ -38,16 +39,19 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -68,6 +72,7 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -77,7 +82,7 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	name := vars["name"]
-	fmt.Printf("GetUserByName name: %d\n", name)
+	fmt.Printf("GetUserByName name: %s\n", name)
 
 	for _, user := range Users {
 		if user.Username == name {
@@ -87,25 +92,28 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	if reflect.ValueOf(result).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		json.NewEncoder(w).Encode(result)
-
 	}
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
