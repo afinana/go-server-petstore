@@ -20,9 +20,23 @@ To see how to make this your own, look here:
 ### Running the server
 To run the server, follow these simple steps:
 
-```
+```sh
 go run main.go
 ```
+
+Using credentials
+
+```sh
+go run main.go -enableCredentials=true -serverAddr=0.0.0.0 -serverPort=8080 -MONGODB_USERNAME=root MONGODB_PASSWORD=example -mongoDatabase=petstore -mongoURI=mongodb://mongo:27017
+```
+
+Using credentials in URL
+
+```sh
+go run main.go -serverAddr=0.0.0.0 -serverPort=8080 -mongoDatabase=petstore -mongoURI=mongodb://root:example@localhost:27017
+```
+
+
 ## Running with Docker
 
 ``` sh

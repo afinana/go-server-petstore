@@ -22,4 +22,5 @@ go.work
 go-petstore-workspace.code-workspace
 *.sublime-project
 *.sublime-workspace
-.scannerwork/
+go.mod
+go.sum

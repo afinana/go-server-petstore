@@ -12,9 +12,10 @@ package petstore
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type Route struct {
@@ -184,7 +185,7 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method).
+			Methods(route.Method, "OPTIONS").
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)

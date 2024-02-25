@@ -13,61 +13,76 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"io/ioutil"
 	"net/http"
-	"reflect"
-	"strconv"
+
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var Users []User
-
+// CreateUser adds a new user to the store
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("CreateUser:: start")
-	// get the body of our POST request
-	// unmarshal this into a new Article struct
-	// append this to our Articles array.
-	reqBody, _ := ioutil.ReadAll(r.Body)
-	var user User
-	json.Unmarshal(reqBody, &user)
 
-	// update our global Pets array to include
-	// our new Pet
-	Users = append(Users, user)
-	json.NewEncoder(w).Encode(user)
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
+	// Define User model
+	var m user
+	// Get request information
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	// Insert new Users
+	insertResult, err := app.users.Insert(m)
+	if err != nil {
+		app.serverError(w, err)
+	}
+	m.ID = insertResult.InsertedID.(primitive.ObjectID)
+
+	app.infoLog.Printf("New user have been created, id=%s", insertResult.InsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	// Get id from incoming url
 	vars := mux.Vars(r)
+	id := vars["id"]
 
-	id, err := strconv.ParseInt(vars["id"], 10, 32)
+	// Delete Users by id
+	deleteResult, err := app.users.Delete(id)
 	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("DeleteUser::id is %d\n", id)
-
-	for index, user := range Orders {
-		if user.Id == id {
-			Users = append(Users[:index], Users[index+1:]...)
-		}
+		app.serverError(w, err)
 	}
 
+	app.infoLog.Printf("Have been eliminated %d user(s)", deleteResult.DeletedCount)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -77,35 +92,60 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	name := vars["name"]
-	fmt.Printf("GetUserByName name: %d\n", name)
+	fmt.Printf("GetUserByName name: %s\n", name)
 
-	for _, user := range Users {
-		if user.Username == name {
-			result = user
-
+	result, err := app.users.FindByName(name)
+	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.infoLog.Printf("User not found")
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			app.serverError(w, err)
 		}
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	if reflect.ValueOf(result).IsZero() {
-		w.WriteHeader(http.StatusNotFound)
-	} else {
-		json.NewEncoder(w).Encode(result)
-
-	}
+	app.enableCors(&w, r)
+	json.NewEncoder(w).Encode(result)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Define User model
+	var m user
+	// Get request information
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	// Update Users
+	updateResult, err := app.users.Update(m)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }

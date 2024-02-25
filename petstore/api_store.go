@@ -13,11 +13,12 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 var Orders []Order
