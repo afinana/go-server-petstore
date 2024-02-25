@@ -12,12 +12,11 @@ package petstore
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"reflect"
 	"strings"
-
-	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {

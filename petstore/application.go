@@ -22,10 +22,6 @@ func (app *Application) serverError(w http.ResponseWriter, err error) {
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (app *Application) clientError(w http.ResponseWriter, status int) {
-	http.Error(w, http.StatusText(status), status)
-}
-
 func NewLog(inLog *log.Logger, errLog *log.Logger,
 	pets *PetModel, stores *StoreModel, users *UserModel) *Application {
 
