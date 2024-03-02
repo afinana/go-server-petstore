@@ -31,6 +31,7 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer ch.Close()
 
 	// Publish a message to the queue
 	err = ch.Publish(
@@ -58,6 +59,7 @@ func (m *PetModel) Delete(id string) error {
 	if err != nil {
 		return err
 	}
+	defer ch.Close()
 
 	// Publish a message to the queue to delete a pet
 	err = ch.Publish(

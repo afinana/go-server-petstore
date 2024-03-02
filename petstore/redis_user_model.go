@@ -86,6 +86,7 @@ func (m *UserModel) Insert(user User) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer ch.Close()
 
 	// Publish a message to the queue
 	err = ch.Publish(

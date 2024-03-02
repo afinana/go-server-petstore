@@ -15,6 +15,7 @@ type OrderModel struct {
 	Q *amqp.Connection
 }
 
+// REDIS METHODS
 // All method will be used to get all records from orders table
 func (m *OrderModel) All() ([]string, error) {
 	// Define variables
@@ -56,6 +57,17 @@ func (m *OrderModel) FindByID(id string) (string, error) {
 	return order, nil
 }
 
+// Delete will be used to delete a order registry
+func (m *OrderModel) Delete(id string) error {
+
+	ctx := context.Background()
+	// Delete pet by id
+	err := m.C.Del(ctx, id).Err()
+
+	return err
+}
+
+// RABBITMQ methods
 // Insert will be used to insert a new order registry
 func (m *OrderModel) Insert(order Order) (*Order, error) {
 	// Add order
@@ -70,6 +82,8 @@ func (m *OrderModel) Insert(order Order) (*Order, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer ch.Close()
+
 	// Publish a message to the queue
 	err = ch.Publish(
 		"petstore", // exchange
@@ -94,14 +108,4 @@ func (m *OrderModel) Update(order Order) (*Order, error) {
 	m.Delete(strconv.FormatInt(order.Id, 10))
 	// publish message to update order
 	return m.Insert(order)
-}
-
-// Delete will be used to delete a order registry
-func (m *OrderModel) Delete(id string) error {
-
-	ctx := context.Background()
-	// Delete pet by id
-	err := m.C.Del(ctx, id).Err()
-
-	return err
 }
