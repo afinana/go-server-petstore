@@ -3,13 +3,16 @@ package petstore
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/streadway/amqp"
 )
 
 // OrderModel represent a mgo database session with a order data model
 type OrderModel struct {
 	C *redis.Client
+	Q *amqp.Connection
 }
 
 // All method will be used to get all records from orders table
@@ -56,19 +59,41 @@ func (m *OrderModel) FindByID(id string) (string, error) {
 // Insert will be used to insert a new order registry
 func (m *OrderModel) Insert(order Order) (*Order, error) {
 	// Add order
-	data, err := json.Marshal(order)
-	ctx := context.Background()
+	body, err := json.Marshal(order)
 	if err != nil {
 		// Checks if the order was not found
 		return nil, err
 	}
-	// Find order by id
-	err = m.C.Set(ctx, fmt.Sprintf("order:%v", order.Id), data, 0).Err()
+
+	// create a new channel
+	ch, err := m.Q.Channel()
+	if err != nil {
+		return nil, err
+	}
+	// Publish a message to the queue
+	err = ch.Publish(
+		"petstore", // exchange
+		"orders",   // routing key
+		false,      // mandatory
+		false,      // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		})
 	if err != nil {
 		// Checks if the order was not found
 		return nil, err
 	}
+
 	return &order, nil
+}
+
+// Update will be used to update a order registry
+func (m *OrderModel) Update(order Order) (*Order, error) {
+	// Clean order register
+	m.Delete(strconv.FormatInt(order.Id, 10))
+	// publish message to update order
+	return m.Insert(order)
 }
 
 // Delete will be used to delete a order registry

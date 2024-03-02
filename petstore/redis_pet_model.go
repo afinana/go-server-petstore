@@ -4,13 +4,86 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"log"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/streadway/amqp"
 )
 
 // PetModel represent a mgo database session with a pet data model
 type PetModel struct {
 	C *redis.Client
+	Q *amqp.Connection
+}
+
+// RAMBITMQ METHODS
+// Insert will be used to insert a new pet registry
+func (m *PetModel) Insert(pet Pet) (*Pet, error) {
+	// Add pet
+	body, err := json.Marshal(pet)
+	if err != nil {
+		// Checks if the pet was not found
+		return nil, err
+	}
+
+	// create a new channel
+	ch, err := m.Q.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	// Publish a message to the queue
+	err = ch.Publish(
+		"",            // exchange
+		"pets-insert", // routing key
+		false,         // mandatory
+		false,         // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		})
+	if err != nil {
+		// Checks if the pet was not found
+		return nil, err
+	}
+
+	return &pet, nil
+}
+
+// Delete will be used to delete a pet registry
+func (m *PetModel) Delete(id string) error {
+
+	// create a new channel
+	ch, err := m.Q.Channel()
+	if err != nil {
+		return err
+	}
+
+	// Publish a message to the queue to delete a pet
+	err = ch.Publish(
+		"",            // exchange
+		"pets-delete", // routing key
+		false,         // mandatory
+		false,         // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        []byte(id),
+		})
+	if err != nil {
+		// Checks if the pet was not found
+		return err
+	}
+
+	return nil
+}
+
+// REDIS METHODS
+// Update using rabbitmq
+func (m *PetModel) Update(pet Pet) (*Pet, error) {
+	// Clean pet register
+	m.DeleteByRedisID(fmt.Sprintf("%v", pet.Id))
+	// publish message to update pet
+	return m.Insert(pet)
 }
 
 // All method will be used to get all records from pets table
@@ -41,69 +114,6 @@ func (m *PetModel) All() ([]Pet, error) {
 func (m *PetModel) FindByID(id string) (*Pet, error) {
 
 	return m.FindByRedisID(fmt.Sprintf("pet:%v", id))
-}
-
-// Insert will be used to insert a new pet registry
-func (m *PetModel) Insert(pet Pet) (*Pet, error) {
-
-	// Add pet
-	json, err := json.Marshal(pet)
-	if err != nil {
-		// Checks if the pet was not found
-		return nil, err
-	}
-
-	ctx := context.Background()
-	// Add pet with id
-	err = m.C.Set(ctx, fmt.Sprintf("pet:%v", pet.Id), json, 0).Err()
-	if err != nil {
-		// Checks if the pet was not found
-		return nil, err
-	}
-
-	// Add status to hset with id
-	status_tag := fmt.Sprintf("pet_status:%v", pet.Status)
-	pet_key := fmt.Sprintf("pet:%v", pet.Id)
-
-	_, err = m.C.HSet(ctx, status_tag, pet_key, pet.Status).Result()
-	if err != nil {
-		// Checks if the hset was not found
-		return nil, err
-	}
-
-	// Add tags to hset with id
-	tags := pet.Tags
-	for _, tag := range tags {
-		_, err = m.C.HSet(ctx, fmt.Sprintf("pet_tags:%v", tag.Name), pet_key, tag.Name).Result()
-		if err != nil {
-			// Checks if the hset was not found
-			return nil, err
-		}
-	}
-
-	return &pet, nil
-}
-
-// Insert will be used to insert a new pet registry
-func (m *PetModel) Update(pet Pet) (*Pet, error) {
-
-	log.Printf("Update::FindByID of id:%d \n", pet.Id)
-
-	// Clean pet register
-	m.DeleteByRedisID(fmt.Sprintf("%v", pet.Id))
-
-	return m.Insert(pet)
-}
-
-// Delete will be used to delete a pet registry
-func (m *PetModel) Delete(id string) error {
-
-	ctx := context.Background()
-	// Delete pet by id
-	err := m.C.Del(ctx, fmt.Sprintf("pet:%v", id)).Err()
-
-	return err
-
 }
 
 // FindByStatus will be used to find a pet registry by status

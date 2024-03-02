@@ -3,15 +3,19 @@ package petstore
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/streadway/amqp"
 )
 
 // UserModel represent a mgo database session with a user data model
 type UserModel struct {
 	C *redis.Client
+	Q *amqp.Connection
 }
 
+// REDIS METHODS
 // All method will be used to get all records from users table
 func (m *UserModel) All() ([]string, error) {
 	// Define variables
@@ -52,21 +56,6 @@ func (m *UserModel) FindByID(id string) (string, error) {
 	return user, nil
 }
 
-// Insert will be used to insert a new user registry
-func (m *UserModel) Insert(user User) (*User, error) {
-	// Add user
-	data, err := json.Marshal(user)
-	ctx := context.Background()
-
-	// Find user by id
-	err = m.C.Set(ctx, fmt.Sprintf("order:%v", user.Id), data, 0).Err()
-	if err != nil {
-		// Checks if the user was not found
-		return nil, err
-	}
-	return &user, nil
-}
-
 // Delete will be used to delete a user registry
 func (m *UserModel) Delete(id string) error {
 
@@ -79,4 +68,47 @@ func (m *UserModel) Delete(id string) error {
 	}
 	return nil
 
+}
+
+// RABBIT METHODS
+
+// Insert will be used to insert a new user registry
+func (m *UserModel) Insert(user User) (*User, error) {
+	// Add user
+	body, err := json.Marshal(user)
+	if err != nil {
+		// Checks if the user was not found
+		return nil, err
+	}
+
+	// create a new channel
+	ch, err := m.Q.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	// Publish a message to the queue
+	err = ch.Publish(
+		"petstore",     // exchange
+		"users-insert", // routing key
+		false,          // mandatory
+		false,          // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		})
+	if err != nil {
+		// Checks if the user was not found
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// Update will be used to update a user registry
+func (m *UserModel) Update(user User) (*User, error) {
+	// Clean user register
+	m.Delete(strconv.FormatInt(user.Id, 10))
+	// publish message to update user
+	return m.Insert(user)
 }
