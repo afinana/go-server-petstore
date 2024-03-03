@@ -13,11 +13,12 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 var Orders []Order
@@ -39,6 +40,7 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -49,6 +51,7 @@ func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Orders)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -78,6 +81,7 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(result)
 
 	}
+	app.enableCors(&w, r)
 }
 
 func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
@@ -96,4 +100,5 @@ func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	app.enableCors(&w, r)
 }

@@ -35,10 +35,10 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 
 	// Publish a message to the queue
 	err = ch.Publish(
-		"",            // exchange
-		"pets-insert", // routing key
-		false,         // mandatory
-		false,         // immediate
+		"petstore-exchange", // exchange
+		"pets-insert",       // routing key
+		false,               // mandatory
+		false,               // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        body,

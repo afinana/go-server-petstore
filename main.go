@@ -46,8 +46,8 @@ func main() {
 
 	infoLog.Printf("Database connection established")
 
-	// establish connection to the message queue
-	conn, err := amqp.Dial(*mqURI)
+	// open a connection to the message broker with heartbeats
+	conn, err := amqp.Dial(*mqURI + "?heartbeat=60s")
 	if err != nil {
 		errLog.Fatal(err)
 	}

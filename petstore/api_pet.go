@@ -39,6 +39,7 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("New pet have been created, id=%d", m.Id)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(m)
 
 }
@@ -58,6 +59,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("Have been eliminated %s pet(s)", id)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
 
 }
 
@@ -83,6 +85,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 		json.NewEncoder(w).Encode(model)
 	}
+	app.enableCors(&w, r)
 
 }
 
@@ -111,6 +114,7 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(model)
 		w.WriteHeader(http.StatusOK)
 	}
+	app.enableCors(&w, r)
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
@@ -141,6 +145,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(model)
 
 	}
+	app.enableCors(&w, r)
 
 }
 
