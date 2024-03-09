@@ -33,12 +33,16 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 	}
 	defer ch.Close()
 
+	routingKey := "pets-add.key"
+	exchangeName := "petstore-exchange"
+	log.Printf("Sending messages to exchange:'%s' with routing key '%s'", exchangeName, routingKey)
+
 	// Publish a message to the queue
 	err = ch.Publish(
-		"petstore-exchange", // exchange
-		"pets-insert",       // routing key
-		false,               // mandatory
-		false,               // immediate
+		exchangeName, // exchange
+		routingKey,   // routing key
+		false,        // mandatory
+		false,        // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        body,
@@ -63,10 +67,10 @@ func (m *PetModel) Delete(id string) error {
 
 	// Publish a message to the queue to delete a pet
 	err = ch.Publish(
-		"",            // exchange
-		"pets-delete", // routing key
-		false,         // mandatory
-		false,         // immediate
+		"petstore-exchange", // exchange
+		"pets-delete.key",   // routing key
+		false,               // mandatory
+		false,               // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(id),
