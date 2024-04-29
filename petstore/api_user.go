@@ -31,7 +31,7 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Define User model
-	var m user
+	var m User
 	// Get request information
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
@@ -88,13 +88,13 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
-	var result User
+
 	vars := mux.Vars(r)
 
 	name := vars["name"]
 	fmt.Printf("GetUserByName name: %s\n", name)
 
-	result, err := app.users.FindByName(name)
+	result, err := app.users.FindByUserName(name)
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
 			app.infoLog.Printf("User not found")
@@ -131,7 +131,7 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Define User model
-	var m user
+	var m User
 	// Get request information
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
@@ -139,7 +139,7 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update Users
-	updateResult, err := app.users.Update(m)
+	updateResult, err := app.users.Update(m.ID.String(), m)
 	if err != nil {
 		app.serverError(w, err)
 	}
