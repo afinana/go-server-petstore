@@ -75,12 +75,10 @@ func (m *PetModel) Delete(id string) (*mongo.DeleteResult, error) {
 // FindByStatus will be used to find a pet registry by status
 func (m *PetModel) FindByStatus(status []string) ([]Pet, error) {
 
-	// begin find
-	// begin find
 	// db.getCollection('pets').find({
 	//     $or: [
-	//          {{'status': 'tag01'} } },
-	//          {{'status': 'tag02'} } }
+	//          {'status': 'tag01'} ,
+	//          {'status': 'tag02'}
 	//     ]
 	// });
 	var filters []bson.M
