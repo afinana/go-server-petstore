@@ -37,6 +37,13 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/",
 			app.Index,
 		},
+		// add route for get all pets
+		Route{
+			"GetPets",
+			strings.ToUpper("Get"),
+			"/v2/pet",
+			app.GetPets,
+		},
 
 		Route{
 			"AddPet",

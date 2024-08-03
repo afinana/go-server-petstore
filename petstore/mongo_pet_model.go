@@ -3,6 +3,7 @@ package petstore
 import (
 	"context"
 	"errors"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,7 +15,7 @@ type PetModel struct {
 }
 
 // All method will be used to get all records from pets table
-func (m *PetModel) All() ([]Pet, error) {
+func (m *PetModel) FindAll() ([]Pet, error) {
 	// Define variables
 	ctx := context.TODO()
 	b := []Pet{}

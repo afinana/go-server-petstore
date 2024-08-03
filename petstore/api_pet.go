@@ -12,12 +12,34 @@ package petstore
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// add route for get all pets
+func (app *Application) GetPets(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	// Get all pets from database
+	model, err := app.pets.FindAll()
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
+	json.NewEncoder(w).Encode(model)
+	w.WriteHeader(http.StatusOK)
+
+}
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
