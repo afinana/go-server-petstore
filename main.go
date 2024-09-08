@@ -38,6 +38,11 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
+	// show mongoURI and mongoDatabase and enableCredentials
+	infoLog.Printf("mongoURI: %s", *mongoURI)
+	infoLog.Printf("mongoDatabase: %s", *mongoDatabase)
+	infoLog.Printf("enableCredentials: %t", *enableCredentials)
+
 	// Create mongo client configuration
 	co := options.Client().ApplyURI(*mongoURI)
 	if *enableCredentials {
