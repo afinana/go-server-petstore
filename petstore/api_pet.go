@@ -12,10 +12,11 @@ package petstore
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/redis/go-redis/v9"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +37,7 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Printf("New pet have been created, id=%d", m.Id)
+	app.infoLog.Printf("New pet have been created, id= %d", m.Id)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(m)
 
@@ -55,7 +56,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Printf("Have been eliminated %d pet(s)", id)
+	app.infoLog.Printf("Have been eliminated %s pet(s)", id)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 
 }
@@ -88,7 +89,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
 	tag_query := r.URL.Query().Get("tags")
-	app.infoLog.Println("Endpoint Hit: FindPetsByTags %s \n", tag_query)
+	app.infoLog.Println("Endpoint Hit: FindPetsByTags", tag_query)
 
 	var model []Pet
 	tags := strings.Split(tag_query, ",")

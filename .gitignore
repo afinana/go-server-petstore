@@ -23,3 +23,4 @@ go-petstore-workspace.code-workspace
 *.sublime-project
 *.sublime-workspace
 .scannerwork/
+__debug_*

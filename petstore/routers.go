@@ -12,9 +12,10 @@ package petstore
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type Route struct {
@@ -140,6 +141,18 @@ func (app *Application) NewRouter() *mux.Router {
 			strings.ToUpper("Post"),
 			"/v2/user/createWithList",
 			app.CreateUsersWithListInput,
+		},
+		Route{
+			"GetAllUsers",
+			strings.ToUpper("Get"),
+			"/v2/user",
+			app.GetAllUsers,
+		},
+		Route{
+			"CreateUsersWithListInput",
+			strings.ToUpper("Get"),
+			"/v2/user/login",
+			app.LoginUser,
 		},
 
 		Route{
