@@ -93,9 +93,9 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	username := vars["username"]
-	fmt.Printf("GetUserByName name: %s\n", username)
+	app.infoLog.Printf("GetUserByName name: %s\n", username)
 
-	// create a new key for the user
+	// find user by name
 	user, err := app.users.FindByName(username)
 	if err == redis.Nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -109,7 +109,7 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(user)
-	w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -125,10 +125,12 @@ func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// find user by name
 	user, err := app.users.FindByName(username)
 	if err == redis.Nil {
+		// user not found
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	if err != nil {
+		// another error
 		app.serverError(w, err)
 		w.WriteHeader(http.StatusNotFound)
 		return

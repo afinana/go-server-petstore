@@ -67,26 +67,18 @@ func (m *UserModel) FindByName(name string) (*User, error) {
 	ctx := context.Background()
 
 	// Find user in hset by name
-	id, err := m.C.HGet(ctx, "users_name", name).Result()
+	id, err := m.C.HGet(ctx, "user_names", name).Result()
 	if err != nil {
 		// Checks if the user was not found
 		return nil, err
 	}
 
 	// Find user by id
-	data, err := m.C.Get(ctx, id).Result()
-	if err != nil {
-		// Checks if the user was not found
-		return nil, err
-	}
-
-	var user User
-	err = json.Unmarshal([]byte(data), &user)
+	user, err := m.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
-	return &user, nil
-
+	return user, nil
 }
 
 // Insert will be used to insert a new user registry
