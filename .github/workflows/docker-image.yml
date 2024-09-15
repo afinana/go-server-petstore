@@ -24,6 +24,7 @@ jobs:
       # github.repository as <account>/<repo>
       USER_ACCOUNT: middleland
       IMAGE_NAME: go-server-petstore
+      TAG_NAME: redis
       
     permissions:
       contents: read
@@ -66,5 +67,5 @@ jobs:
         with:
           context: .          
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.USER_ACCOUNT }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.USER_ACCOUNT }}/${{ env.IMAGE_NAME }}:${{ env.TAG_NAME }}
     
