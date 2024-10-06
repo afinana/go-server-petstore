@@ -1,9 +1,8 @@
-# syntax=docker/dockerfile:1
+FROM golang:1.22-alpine3.19
 
-## Build
-FROM golang:1.18-buster AS build
-
+# Set destination for COPY
 WORKDIR /app
+
 # Download Go modules
 COPY go.mod .
 COPY go.sum .
@@ -15,17 +14,19 @@ COPY main.go .
 
 RUN go mod download
 
+# Build
 RUN go build -o /swagger
 
-## Deploy
-FROM gcr.io/distroless/base-debian10
-
-WORKDIR /
-
-COPY --from=build /swagger /swagger
-
+# This is for documentation purposes only.
+# To actually open the port, runtime parameters
+# must be supplied to the docker command.
 EXPOSE 8080
 
-USER nonroot:nonroot
+# (Optional) environment variable that our dockerised
+# application can make use of. The value of environment
+# variables can also be set via parameters supplied
+# to the docker command on the command line.
+#ENV HTTP_PORT=8081
 
-ENTRYPOINT ["/swagger"]
+# Run
+CMD [ "/swagger" ]
