@@ -142,6 +142,18 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/createWithList",
 			app.CreateUsersWithListInput,
 		},
+		Route{
+			"GetAllUsers",
+			strings.ToUpper("Get"),
+			"/v2/user",
+			app.GetAllUsers,
+		},
+		Route{
+			"CreateUsersWithListInput",
+			strings.ToUpper("Get"),
+			"/v2/user/login",
+			app.LoginUser,
+		},
 
 		Route{
 			"DeleteUser",
@@ -185,7 +197,7 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method, "OPTIONS").
+			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
