@@ -11,81 +11,47 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"log"
+	api "middleland.net/swaggerapi/petstore"
 	"net/http"
 	"os"
 	"time"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	api "middleland.net/swaggerapi/petstore"
 )
 
 func main() {
 
 	// Define command-line flags
 	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 8080, "HTTP server network port")
-	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
-	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
-	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
+	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
+	redisURI := flag.String("redisURI", "redis://:@localhost:6379/", "Database hostname url")
 	flag.Parse()
 
 	// Create logger for writing information and error messages.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// Create mongo client configuration
-	co := options.Client().ApplyURI(*mongoURI)
-	if *enableCredentials {
-		co.Auth = &options.Credential{
-			Username: os.Getenv("MONGODB_USERNAME"),
-			Password: os.Getenv("MONGODB_PASSWORD"),
-		}
-	}
-
 	// Establish database connection
-	client, err := mongo.NewClient(co)
+	opt, err := redis.ParseURL(*redisURI)
 	if err != nil {
 		errLog.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	err = client.Connect(ctx)
-	if err != nil {
-		errLog.Fatal(err)
-	}
-
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
+	client := redis.NewClient(opt)
 
 	infoLog.Printf("Database connection established")
-
-	if err != nil {
-		return
-	}
-	if err != nil {
-		return
-	}
-
 	app := api.NewLog(
 		infoLog,
 		errLog,
 		&api.PetModel{
-			C: client.Database(*mongoDatabase).Collection("pets"),
+			C: client,
 		},
-		&api.StoreModel{
-			C: client.Database(*mongoDatabase).Collection("stores"),
+		&api.OrderModel{
+			C: client,
 		},
 		&api.UserModel{
-			C: client.Database(*mongoDatabase).Collection("users"),
+			C: client,
 		},
 	)
 

@@ -16,136 +16,155 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/redis/go-redis/v9"
 )
 
-// CreateUser adds a new user to the store
+var Users []User
+
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf("CreateUser:: start")
+	// get the body of our POST request
+	// unmarshal this into a new Article struct
+	// append this to our Articles array.
+	var user User
 
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
+	// Get request information
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	// add user in redis
+	_, err = app.users.Insert(user)
+	if err != nil {
+		app.serverError(w, err)
 		return
 	}
 
-	// Define User model
-	var m User
-	// Get request information
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
-		app.serverError(w, err)
-	}
+	app.infoLog.Printf("New user have been created, id= %d", user.Id)
 
-	// Insert new Users
-	insertResult, err := app.users.Insert(m)
-	if err != nil {
-		app.serverError(w, err)
-	}
-	m.ID = insertResult.InsertedID.(primitive.ObjectID)
-
-	app.infoLog.Printf("New user have been created, id=%s", insertResult.InsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+
 }
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 	// Get id from incoming url
 	vars := mux.Vars(r)
-	id := vars["id"]
+	id := vars["username"]
 
-	// Delete Users by id
-	deleteResult, err := app.users.Delete(id)
-	if err != nil {
-		app.serverError(w, err)
+	// append users to id
+	app.infoLog.Printf("DeleteUser:: start, id= %s", id)
+	// Find user by Name
+	user, err := app.users.FindByName(id)
+	if err == redis.Nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	app.infoLog.Printf("Have been eliminated %d user(s)", deleteResult.DeletedCount)
+	// Delete Pets by id
+	// generate a new key for the user
+
+	err = app.users.Delete(fmt.Sprintf("%v", user.Id))
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.infoLog.Printf("User have been eliminated %s pet(s)", id)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
 
 func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
-
+	var user *User
 	vars := mux.Vars(r)
 
-	name := vars["name"]
-	fmt.Printf("GetUserByName name: %s\n", name)
+	username := vars["username"]
+	app.infoLog.Printf("GetUserByName name: %s\n", username)
 
-	result, err := app.users.FindByUserName(name)
+	// find user by name
+	user, err := app.users.FindByName(username)
+	if err == redis.Nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
-			app.infoLog.Printf("User not found")
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			app.serverError(w, err)
-		}
+		app.serverError(w, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
-	json.NewEncoder(w).Encode(result)
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+
+	var user *User
+	// read query parameters username and password
+	username := r.URL.Query().Get("username")
+	password := r.URL.Query().Get("password")
+
+	// add log info username
+	app.infoLog.Printf("LoginUser:: start, username= %s", username)
+
+	// find user by name
+	user, err := app.users.FindByName(username)
+	if err == redis.Nil {
+		// user not found
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		// another error
+		app.serverError(w, err)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	// check password
+	if user.Password != password {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	json.NewEncoder(w).Encode(user)
 	w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+}
 
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
+// Extra functions of petstore Swagger API
+// get all pets function
+func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := app.users.FindAll()
+	if err != nil {
+		app.serverError(w, err)
 		return
 	}
-
-	// Define User model
-	var m User
-	// Get request information
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
-		app.serverError(w, err)
-	}
-
-	// Update Users
-	updateResult, err := app.users.Update(m.ID.String(), m)
-	if err != nil {
-		app.serverError(w, err)
-	}
-
-	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(users)
 }
