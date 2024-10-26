@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 
 ## Build
-FROM golang:1.18-buster AS build
+FROM golang:1.22 AS build
 
 WORKDIR /app
-# Download Go modules
-COPY go.mod .
-COPY go.sum .
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
 
 # Copy the source code. Note the slash at the end, as explained in
 # https://docs.docker.com/engine/reference/builder/#copy
