@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ## Build
-FROM golang:1.22 AS build
+FROM golang:1.22-bullseye AS build
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN go mod download
 RUN go build -o /swagger
 
 ## Deploy
-FROM gcr.io/distroless/base-debian10
+FROM gcr.io/distroless/base-debian11
 
 WORKDIR /
 
