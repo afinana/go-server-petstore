@@ -41,7 +41,7 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.infoLog.Printf("New user have been created, id= %d", user.Id)
+	app.infoLog.Printf("New user have been created, id= %d", user.ID)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(user)
@@ -76,14 +76,14 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// Delete Pets by id
 	// generate a new key for the user
 
-	err = app.users.Delete(fmt.Sprintf("%v", user.Id))
+	err = app.users.Delete(fmt.Sprintf("%v", user.ID))
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.infoLog.Printf("User have been eliminated %s pet(s)", id)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.infoLog.Printf("User has been eliminated %s pet(s)", id)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -98,22 +98,20 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	// find user by name
 	user, err := app.users.FindByName(username)
 	if err == redis.Nil {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 	if err != nil {
 		app.serverError(w, err)
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
-
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
-
 	var user *User
 	// read query parameters username and password
 	username := r.URL.Query().Get("username")

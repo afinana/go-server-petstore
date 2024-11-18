@@ -20,162 +20,116 @@ import (
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
-
-	// Define Pets model
 	var m Pet
-	// Get request information
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	// Insert new Pets
-	_, err = app.pets.Insert(m)
-	if err != nil {
+	if _, err := app.pets.Insert(m); err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.infoLog.Printf("New pet have been created, id= %d", m.Id)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(m)
-
+	app.infoLog.Printf("New pet created, id= %d", m.ID)
+	app.respondWithJSON(w, http.StatusCreated, m)
 }
 
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 
-	// Get id from incoming url
-	vars := mux.Vars(r)
-	id := vars["id"]
-
-	// Delete Pets by id
-	err := app.pets.Delete(id)
-	if err != nil {
+	if err := app.pets.Delete(id); err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.infoLog.Printf("Have been eliminated %s pet(s)", id)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-
+	app.infoLog.Printf("Deleted pet with id %s", id)
+	app.respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
+	statusQuery := r.URL.Query().Get("status")
+	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s", statusQuery)
 
-	status_query := r.URL.Query().Get("status")
-	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s \n", status_query)
-
-	var model []Pet
-	status := strings.Split(status_query, ",")
-
-	// Find Pets by id
+	status := strings.Split(statusQuery, ",")
 	model, err := app.pets.FindByStatus(status)
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
-			app.infoLog.Println("Pets not found")
+			app.respondWithError(w, http.StatusNotFound, "Pets not found")
 			return
 		}
-		// Any other error will send an internal server error
-		app.serverError(w, err)
-	} else {
-
-		w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode(model)
-	}
-
-}
-
-func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
-
-	tag_query := r.URL.Query().Get("tags")
-	app.infoLog.Println("Endpoint Hit: FindPetsByTags", tag_query)
-
-	var model []Pet
-	tags := strings.Split(tag_query, ",")
-
-	// Find Pets by id
-	model, err := app.pets.FindBytags(tags)
-	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
-			w.WriteHeader(http.StatusNotFound)
-			app.infoLog.Println("Pets not found")
-			return
-		}
-		// Any other error will send an internal server error
-		app.serverError(w, err)
-
-	} else {
-
-		w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-		json.NewEncoder(w).Encode(model)
-		w.WriteHeader(http.StatusOK)
-	}
-}
-
-func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
-
-	// Get id from incoming url
-	vars := mux.Vars(r)
-	id := vars["petId"]
-
-	app.infoLog.Printf("Get pet by id=%s \n", id)
-
-	// Find Pets by id
-	model, err := app.pets.FindByID(id)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-
-	if err == redis.Nil {
-
-		// Object not found
-		app.infoLog.Printf("pet with id=%s not found\n", id)
-		w.WriteHeader(http.StatusNotFound)
-
-	} else if err != nil {
-		// Any other error will send an internal server error
-		app.serverError(w, err)
-
-	} else {
-
-		// Object has been found
-		json.NewEncoder(w).Encode(model)
-
-	}
-
-}
-
-func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
-
-	// Define Pets model
-	var m Pet
-	// Get request information
-	err := json.NewDecoder(r.Body).Decode(&m)
-	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.infoLog.Printf("Updating pet with id=%v \n", m.Id)
+	app.respondWithJSON(w, http.StatusOK, model)
+}
 
-	// Insert new Pets
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	_, err = app.pets.Update(m)
+func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
+	tagQuery := r.URL.Query().Get("tags")
+	app.infoLog.Println("Endpoint Hit: FindPetsByTags", tagQuery)
+
+	tags := strings.Split(tagQuery, ",")
+	model, err := app.pets.FindBytags(tags)
 	if err != nil {
+		if err.Error() == "ErrNoDocuments" {
+			app.respondWithError(w, http.StatusNotFound, "Pets not found")
+			return
+		}
 		app.serverError(w, err)
-
-	} else {
-
-		json.NewEncoder(w).Encode(m)
-
+		return
 	}
+
+	app.respondWithJSON(w, http.StatusOK, model)
+}
+
+func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["petId"]
+	app.infoLog.Printf("Get pet by id=%s", id)
+
+	model, err := app.pets.FindByID(id)
+	if err == redis.Nil {
+		app.respondWithError(w, http.StatusNotFound, "Pet not found")
+		return
+	} else if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.respondWithJSON(w, http.StatusOK, model)
+}
+
+func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
+	var m Pet
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.infoLog.Printf("Updating pet with id=%v", m.ID)
+	if _, err := app.pets.Update(m); err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	app.respondWithJSON(w, http.StatusOK, m)
 }
 
 func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	app.respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
 }
 
 func (app *Application) UploadFile(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	app.respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
+// Helper functions
+func (app *Application) respondWithJSON(w http.ResponseWriter, status int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(payload)
+}
+
+func (app *Application) respondWithError(w http.ResponseWriter, status int, message string) {
+	app.respondWithJSON(w, status, map[string]string{"error": message})
 }
