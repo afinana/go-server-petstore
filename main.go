@@ -11,14 +11,17 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"log"
-	api "middleland.net/swaggerapi/petstore"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	api "middleland.net/swaggerapi/petstore"
 )
 
 func main() {
@@ -39,6 +42,7 @@ func main() {
 		errLog.Fatal(err)
 	}
 	client := redis.NewClient(opt)
+	defer client.Close()
 
 	infoLog.Printf("Database connection established")
 	app := api.NewLog(
@@ -66,7 +70,27 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", serverURI)
-	err = srv.ListenAndServe()
-	errLog.Fatal(err)
+	// Start the server in a goroutine
+	go func() {
+		infoLog.Printf("Starting server on %s", serverURI)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errLog.Fatalf("Could not listen on %s: %v\n", serverURI, err)
+		}
+	}()
+
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	<-stop
+
+	infoLog.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		errLog.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	infoLog.Println("Server exiting")
 }

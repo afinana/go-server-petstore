@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/redis/go-redis/v9"
 	"log"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // PetModel represent a mgo database session with a pet data model
@@ -55,7 +56,7 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 
 	ctx := context.Background()
 	// Add pet with id
-	err = m.C.Set(ctx, fmt.Sprintf("pet:%v", pet.Id), json, 0).Err()
+	err = m.C.Set(ctx, fmt.Sprintf("pet:%v", pet.ID), json, 0).Err()
 	if err != nil {
 		// Checks if the pet was not found
 		return nil, err
@@ -63,7 +64,7 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 
 	// Add status to hset with id
 	status_tag := fmt.Sprintf("pet_status:%v", pet.Status)
-	pet_key := fmt.Sprintf("pet:%v", pet.Id)
+	pet_key := fmt.Sprintf("pet:%v", pet.ID)
 
 	_, err = m.C.HSet(ctx, status_tag, pet_key, pet.Status).Result()
 	if err != nil {
@@ -87,10 +88,10 @@ func (m *PetModel) Insert(pet Pet) (*Pet, error) {
 // Insert will be used to insert a new pet registry
 func (m *PetModel) Update(pet Pet) (*Pet, error) {
 
-	log.Printf("Update::FindByID of id:%d \n", pet.Id)
+	log.Printf("Update::FindByID of id:%d \n", pet.ID)
 
 	// Clean pet register
-	m.DeleteByRedisID(fmt.Sprintf("%v", pet.Id))
+	m.DeleteByRedisID(fmt.Sprintf("%v", pet.ID))
 
 	return m.Insert(pet)
 }
@@ -179,7 +180,7 @@ func (m *PetModel) DeleteByRedisID(id string) error {
 
 		// Clean old pet registry
 		status_tag := fmt.Sprintf("pet_status:%v", pet.Status)
-		pet_key := fmt.Sprintf("pet:%v", pet.Id)
+		pet_key := fmt.Sprintf("pet:%v", pet.ID)
 		_ = m.C.Del(ctx, pet_key)
 		_ = m.C.HDel(ctx, status_tag, pet_key)
 		for _, tag := range pet.Tags {

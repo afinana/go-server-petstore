@@ -18,7 +18,8 @@ RUN go mod download
 RUN go build -o /swagger
 
 ## Deploy
-FROM gcr.io/distroless/base-debian11
+##FROM gcr.io/distroless/base-debian11
+FROM alpine:latest
 
 WORKDIR /
 
@@ -26,6 +27,6 @@ COPY --from=build /swagger /swagger
 
 EXPOSE 8080
 
-USER nonroot:nonroot
+#USER nonroot:nonroot
 
 ENTRYPOINT ["/swagger"]

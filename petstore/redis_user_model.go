@@ -93,7 +93,7 @@ func (m *UserModel) Insert(user User) (*User, error) {
 
 	ctx := context.Background()
 	// Add user with id
-	user_key := fmt.Sprintf("user:%v", user.Id)
+	user_key := fmt.Sprintf("user:%v", user.ID)
 	err = m.C.Set(ctx, user_key, json, 0).Err()
 	if err != nil {
 		// Checks if the pet was not found
