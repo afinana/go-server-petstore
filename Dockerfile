@@ -15,11 +15,13 @@ COPY main.go .
 
 RUN go mod download
 
-RUN go build -o /swagger
+# Build
+RUN CGO_ENABLED=0 GOOS=linux go build -o /swagger
+
 
 ## Deploy
 ##FROM gcr.io/distroless/base-debian11
-FROM alpine:latest
+FROM scratch
 
 WORKDIR /
 
@@ -27,6 +29,6 @@ COPY --from=build /swagger /swagger
 
 EXPOSE 8080
 
-#USER nonroot:nonroot
+USER nonroot:nonroot
 
 ENTRYPOINT ["/swagger"]
