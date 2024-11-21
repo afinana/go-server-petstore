@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -63,7 +64,7 @@ func (m *OrderModel) Insert(order Order) (*Order, error) {
 		return nil, err
 	}
 	// Find order by id
-	err = m.C.Set(ctx, fmt.Sprintf("order:%v", order.Id), data, 0).Err()
+	err = m.C.Set(ctx, fmt.Sprintf("order:%v", order.ID), data, 0).Err()
 	if err != nil {
 		// Checks if the order was not found
 		return nil, err

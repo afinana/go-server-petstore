@@ -149,8 +149,8 @@ func (app *Application) NewRouter() *mux.Router {
 			app.GetAllUsers,
 		},
 		Route{
-			"CreateUsersWithListInput",
-			strings.ToUpper("Get"),
+			"LoginUser",             // Corrected the route name
+			strings.ToUpper("Post"), // Changed method to Post
 			"/v2/user/login",
 			app.LoginUser,
 		},
@@ -167,13 +167,6 @@ func (app *Application) NewRouter() *mux.Router {
 			strings.ToUpper("Get"),
 			"/v2/user/{username}",
 			app.GetUserByName,
-		},
-
-		Route{
-			"LoginUser",
-			strings.ToUpper("Get"),
-			"/v2/user/login",
-			app.LoginUser,
 		},
 
 		Route{
