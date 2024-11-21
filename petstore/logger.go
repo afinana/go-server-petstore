@@ -16,17 +16,41 @@ import (
 	"time"
 )
 
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	size       int
+}
+
+func newResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{w, http.StatusOK, 0}
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriter) Write(b []byte) (int, error) {
+	size, err := rw.ResponseWriter.Write(b)
+	rw.size += size
+	return size, err
+}
+
 func Logger(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
+		rw := newResponseWriter(w)
 
-		inner.ServeHTTP(w, r)
+		inner.ServeHTTP(rw, r)
 
 		log.Printf(
-			"%s %s %s %s",
+			"%s %s %s %d %d %s",
 			r.Method,
 			r.RequestURI,
 			name,
+			rw.statusCode,
+			rw.size,
 			time.Since(start),
 		)
 	})

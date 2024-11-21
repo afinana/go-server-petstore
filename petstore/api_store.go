@@ -13,34 +13,35 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 var Orders []Order
 
 func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
-
 	vars := mux.Vars(r)
 
 	fmt.Printf("DeleteOrder::id is %s\n", vars["orderId"])
 	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
 	if err != nil {
-		panic(err)
+		http.Error(w, "Invalid order ID", http.StatusBadRequest)
+		return
 	}
 
 	for index, order := range Orders {
-		if order.Id == id {
+		if int(order.ID) == int(id) {
 			Orders = append(Orders[:index], Orders[index+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
+	http.Error(w, "Order not found", http.StatusNotFound)
 }
 
 func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +66,7 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("GetOrderById id: %d\n", id)
 
 	for _, order := range Orders {
-		if order.Id == id {
+		if order.ID == id {
 			result = order
 
 		}

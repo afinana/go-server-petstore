@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ## Build
-FROM golang:1.22-bullseye AS build
+FROM golang:1.22 AS build
 
 WORKDIR /app
 
@@ -13,19 +13,24 @@ COPY go.mod go.sum ./
 COPY petstore ./petstore
 COPY main.go .
 
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-RUN go build -o /swagger
+# Build
+RUN CGO_ENABLED=0 GOOS=linux go build -o /go-server-petstore
 
 ## Deploy
-FROM gcr.io/distroless/base-debian11
+##FROM gcr.io/distroless/base-debian11
+FROM scratch
 
+# Set the Current Working Directory inside the container
 WORKDIR /
 
-COPY --from=build /swagger /swagger
+COPY --from=build /go-server-petstore /go-server-petstore
 
+# Expose port 8080 to the outside world
 EXPOSE 8080
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/swagger"]
+ENTRYPOINT ["/go-server-petstore"]
