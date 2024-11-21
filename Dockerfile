@@ -31,6 +31,5 @@ COPY --from=build /go-server-petstore /go-server-petstore
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
-USER nonroot:nonroot
-
+# Command to run the executable
 ENTRYPOINT ["/go-server-petstore"]
