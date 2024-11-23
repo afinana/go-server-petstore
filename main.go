@@ -70,11 +70,12 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	// Start the server in a goroutine
+	// Start the server
+	infoLog.Printf("Starting server on %s", serverURI)
 	go func() {
-		infoLog.Printf("Starting server on %s", serverURI)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			errLog.Fatalf("Could not listen on %s: %v\n", serverURI, err)
+		err := srv.ListenAndServe()
+		if err != nil {
+			errLog.Fatalf("Server failed to start: %v", err)
 		}
 	}()
 
