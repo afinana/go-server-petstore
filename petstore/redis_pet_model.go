@@ -123,7 +123,9 @@ func (m *PetModel) FindByTagsRedis(prefix string, tags []string) ([]Pet, error) 
 
 	// begin find
 	ctx := context.Background()
-	var pets []Pet
+	// create a list of pets empty
+	pets := []Pet{}
+
 	for _, tag := range tags {
 
 		key := fmt.Sprintf("%v%v", prefix, tag)
