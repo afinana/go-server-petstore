@@ -55,7 +55,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	model, err := app.pets.FindByStatus(status)
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
-			app.respondWithError(w, http.StatusNotFound, "Pets not found")
+			app.respondWithJSON(w, http.StatusNotFound, model)
 			return
 		}
 		app.serverError(w, err)
