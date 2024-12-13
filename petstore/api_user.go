@@ -23,6 +23,14 @@ var Users []User
 
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
@@ -49,16 +57,33 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
 
 	// Get id from incoming url
 	vars := mux.Vars(r)
@@ -89,6 +114,14 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var user *User
 	vars := mux.Vars(r)
 
@@ -112,6 +145,14 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var user *User
 	// read query parameters username and password
 	username := r.URL.Query().Get("username")
@@ -158,6 +199,14 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // Extra functions of petstore Swagger API
 // get all pets function
 func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	users, err := app.users.FindAll()
 	if err != nil {
 		app.serverError(w, err)

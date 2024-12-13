@@ -20,6 +20,14 @@ import (
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		app.serverError(w, err)
@@ -36,6 +44,14 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	id := mux.Vars(r)["id"]
 
 	if err := app.pets.Delete(id); err != nil {
@@ -48,6 +64,14 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	statusQuery := r.URL.Query().Get("status")
 	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s", statusQuery)
 
@@ -66,6 +90,14 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	tagQuery := r.URL.Query().Get("tags")
 	app.infoLog.Println("Endpoint Hit: FindPetsByTags", tagQuery)
 
@@ -84,6 +116,14 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	id := mux.Vars(r)["petId"]
 	app.infoLog.Printf("Get pet by id=%s", id)
 
@@ -100,6 +140,14 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		app.serverError(w, err)
