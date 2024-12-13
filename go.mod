@@ -5,6 +5,7 @@ go 1.22.0
 require (
 	github.com/gorilla/mux v1.8.0
 	github.com/redis/go-redis/v9 v9.0.2
+//	github.com/rs/cors v1.11.1
 )
 
 require (

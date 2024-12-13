@@ -190,13 +190,25 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method).
+			Methods(route.Method, "OPTIONS").
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
-	}
 
+	}
 	return router
+
+	/*
+		// Add CORS middleware
+		c := cors.New(cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowedMethods:   []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"},
+			AllowedHeaders:   []string{"*"},
+			AllowCredentials: true,
+		})
+
+		return c.Handler(router).(*mux.Router)
+	*/
 }
 
 func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
