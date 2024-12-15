@@ -13,6 +13,7 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -192,8 +193,39 @@ func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
+	// Read request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	// Unmarshal request body into User struct
+	var user User
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update user in the database
+	result, err := app.users.Update(user)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(*result)
 }
 
 // Extra functions of petstore Swagger API

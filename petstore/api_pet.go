@@ -21,12 +21,11 @@ import (
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	// Enable CORS
+	app.enableCors(&w, r)
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	app.enableCors(&w, r)
 
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
@@ -38,7 +37,7 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
+	RecordMetrics(r.URL.Path, r.Method, "201")
 	app.infoLog.Printf("New pet created, id= %d", m.ID)
 	app.respondWithJSON(w, http.StatusCreated, m)
 }
