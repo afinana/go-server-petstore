@@ -182,6 +182,20 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/{username}",
 			app.UpdateUser,
 		},
+		// Added missing routes for user operations
+		Route{
+			"UpdateUser",
+			strings.ToUpper("Put"),
+			"/v2/user/{userId}",
+			app.UpdateUser,
+		},
+
+		Route{
+			"GetAllUsers",
+			strings.ToUpper("Get"),
+			"/v2/users",
+			app.GetAllUsers,
+		},
 	}
 
 	for _, route := range routes {
@@ -190,13 +204,17 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method).
+			Methods(route.Method, "OPTIONS").
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
+
 	}
+	// Add metrics route
+	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
 	return router
+
 }
 
 func (app *Application) Index(w http.ResponseWriter, r *http.Request) {

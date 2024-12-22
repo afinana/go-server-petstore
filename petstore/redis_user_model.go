@@ -62,6 +62,35 @@ func (m *UserModel) FindByID(id string) (*User, error) {
 
 }
 
+// Update by id
+func (m *UserModel) Update(user User) (*User, error) {
+	// Add pet
+	json, err := json.Marshal(user)
+	if err != nil {
+		// Checks if the pet was not found
+		return nil, err
+	}
+
+	ctx := context.Background()
+	// Add user with id
+	user_key := fmt.Sprintf("user:%v", user.ID)
+
+	err = m.C.Set(ctx, user_key, json, 0).Err()
+	if err != nil {
+		// Checks if the pet was not found
+		return nil, err
+	}
+
+	// Add users name to hset user_names with id
+	_, err = m.C.HSet(ctx, "user_names", user.Username, user_key).Result()
+	if err != nil {
+		// Checks if the hset was not found
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 // FindByID will be used to find a user registry by id
 func (m *UserModel) FindByName(name string) (*User, error) {
 	ctx := context.Background()

@@ -20,6 +20,13 @@ import (
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	app.enableCors(&w, r)
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		app.serverError(w, err)
@@ -30,12 +37,20 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
+	RecordMetrics(r.URL.Path, r.Method, "201")
 	app.infoLog.Printf("New pet created, id= %d", m.ID)
 	app.respondWithJSON(w, http.StatusCreated, m)
 }
 
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	id := mux.Vars(r)["id"]
 
 	if err := app.pets.Delete(id); err != nil {
@@ -48,6 +63,14 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	statusQuery := r.URL.Query().Get("status")
 	app.infoLog.Printf("Endpoint Hit: FindPetsByStatus %s", statusQuery)
 
@@ -55,7 +78,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	model, err := app.pets.FindByStatus(status)
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
-			app.respondWithError(w, http.StatusNotFound, "Pets not found")
+			app.respondWithJSON(w, http.StatusNotFound, model)
 			return
 		}
 		app.serverError(w, err)
@@ -66,6 +89,14 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	tagQuery := r.URL.Query().Get("tags")
 	app.infoLog.Println("Endpoint Hit: FindPetsByTags", tagQuery)
 
@@ -84,6 +115,14 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	id := mux.Vars(r)["petId"]
 	app.infoLog.Printf("Get pet by id=%s", id)
 
@@ -100,6 +139,14 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		app.serverError(w, err)

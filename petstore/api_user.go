@@ -13,6 +13,7 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -22,6 +23,14 @@ import (
 var Users []User
 
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
 
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
@@ -49,16 +58,33 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
 
 	// Get id from incoming url
 	vars := mux.Vars(r)
@@ -89,6 +115,14 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var user *User
 	vars := mux.Vars(r)
 
@@ -112,6 +146,14 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var user *User
 	// read query parameters username and password
 	username := r.URL.Query().Get("username")
@@ -151,13 +193,52 @@ func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
+	// Read request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	// Unmarshal request body into User struct
+	var user User
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update user in the database
+	result, err := app.users.Update(user)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(*result)
 }
 
 // Extra functions of petstore Swagger API
 // get all pets function
 func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	users, err := app.users.FindAll()
 	if err != nil {
 		app.serverError(w, err)

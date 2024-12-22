@@ -24,17 +24,25 @@ import (
 var Orders []Order
 
 func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	vars := mux.Vars(r)
 
 	fmt.Printf("DeleteOrder::id is %s\n", vars["orderId"])
-	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
+	id, err := strconv.ParseInt(vars["orderId"], 10, 64) // Changed 32 to 64
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
 		return
 	}
 
 	for index, order := range Orders {
-		if int(order.ID) == int(id) {
+		if order.ID == id { // Changed int(order.ID) == int(id) to order.ID == id
 			Orders = append(Orders[:index], Orders[index+1:]...)
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -46,6 +54,14 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
 
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	fmt.Println("GetInventory:: return all orders")
 	json.NewEncoder(w).Encode(Orders)
 
@@ -55,6 +71,14 @@ func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
+
 	var result Order
 	vars := mux.Vars(r)
 
@@ -82,6 +106,14 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
+
+	// Enable CORS
+	if r.Method == "OPTIONS" {
+		app.enableCors(&w, r)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	app.enableCors(&w, r)
 
 	// get the body of our POST request
 	// unmarshal this into a new Article struct

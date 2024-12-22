@@ -96,14 +96,19 @@ func (m *PetModel) Update(pet Pet) (*Pet, error) {
 	return m.Insert(pet)
 }
 
+// Update by id will be used to update a pet registry by id
+func (m *PetModel) UpdateByID(id string, pet Pet) (*Pet, error) {
+
+	// Clean pet register
+	m.DeleteByRedisID(id)
+
+	return m.Insert(pet)
+}
+
 // Delete will be used to delete a pet registry
 func (m *PetModel) Delete(id string) error {
 
-	ctx := context.Background()
-	// Delete pet by id
-	err := m.C.Del(ctx, fmt.Sprintf("pet:%v", id)).Err()
-
-	return err
+	return m.DeleteByRedisID(id)
 
 }
 
@@ -123,7 +128,9 @@ func (m *PetModel) FindByTagsRedis(prefix string, tags []string) ([]Pet, error) 
 
 	// begin find
 	ctx := context.Background()
-	var pets []Pet
+	// create a list of pets empty
+	pets := []Pet{}
+
 	for _, tag := range tags {
 
 		key := fmt.Sprintf("%v%v", prefix, tag)
