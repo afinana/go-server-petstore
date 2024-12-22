@@ -21,11 +21,13 @@ import (
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	// Enable CORS
+
 	app.enableCors(&w, r)
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+	app.enableCors(&w, r)
 
 	var m Pet
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {

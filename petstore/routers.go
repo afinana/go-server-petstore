@@ -213,6 +213,8 @@ func (app *Application) NewRouter() *mux.Router {
 	// Add metrics route
 	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
+
+	}
 	return router
 
 }
