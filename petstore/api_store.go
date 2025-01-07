@@ -35,14 +35,14 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	fmt.Printf("DeleteOrder::id is %s\n", vars["orderId"])
-	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
+	id, err := strconv.ParseInt(vars["orderId"], 10, 64) // Changed 32 to 64
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)
 		return
 	}
 
 	for index, order := range Orders {
-		if int(order.ID) == int(id) {
+		if order.ID == id { // Changed int(order.ID) == int(id) to order.ID == id
 			Orders = append(Orders[:index], Orders[index+1:]...)
 			w.WriteHeader(http.StatusNoContent)
 			return

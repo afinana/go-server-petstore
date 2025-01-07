@@ -182,6 +182,20 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/{username}",
 			app.UpdateUser,
 		},
+		// Added missing routes for user operations
+		Route{
+			"UpdateUser",
+			strings.ToUpper("Put"),
+			"/v2/user/{userId}",
+			app.UpdateUser,
+		},
+
+		Route{
+			"GetAllUsers",
+			strings.ToUpper("Get"),
+			"/v2/users",
+			app.GetAllUsers,
+		},
 	}
 
 	for _, route := range routes {
@@ -196,19 +210,11 @@ func (app *Application) NewRouter() *mux.Router {
 			Handler(handler)
 
 	}
+	// Add metrics route
+	router.Handle("/metrics", MetricsHandler()).Methods("GET")
+
 	return router
 
-	/*
-		// Add CORS middleware
-		c := cors.New(cors.Options{
-			AllowedOrigins:   []string{"*"},
-			AllowedMethods:   []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"},
-			AllowedHeaders:   []string{"*"},
-			AllowCredentials: true,
-		})
-
-		return c.Handler(router).(*mux.Router)
-	*/
 }
 
 func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
