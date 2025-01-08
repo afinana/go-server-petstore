@@ -3,13 +3,14 @@ package petstore
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// PetModel represent a mgo database session with a pet data model
+// PetModel represent a mongo database session with a pet data model
 type PetModel struct {
 	C *mongo.Collection
 }
@@ -18,23 +19,23 @@ type PetModel struct {
 func (m *PetModel) FindAll() ([]Pet, error) {
 	// Define variables
 	ctx := context.TODO()
-	b := []Pet{}
+	var pets = []Pet{}
 
 	// Find all pets
 	petCursor, err := m.C.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
-	err = petCursor.All(ctx, &b)
+	err = petCursor.All(ctx, &pets)
 	if err != nil {
 		return nil, err
 	}
 
-	return b, err
+	return pets, err
 }
 
 // FindByID will be used to find a pet registry by id
-func (m *PetModel) FindByID(id string) (*Pet, error) {
+func (m *PetModel) FindByHexID(id string) (*Pet, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -52,6 +53,30 @@ func (m *PetModel) FindByID(id string) (*Pet, error) {
 	}
 
 	return &pet, nil
+}
+
+// FindByID will be used to find a pet registry by id
+func (m *PetModel) FindByID(id string) (*Pet, error) {
+
+	// convert id to number
+	index, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find pet by id
+	var pet = Pet{}
+	err = m.C.FindOne(context.TODO(), bson.M{"id": index}).Decode(&pet)
+	if err != nil {
+		// Checks if the pet was not found
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("ErrNoDocuments")
+		}
+		return nil, err
+	}
+
+	return &pet, nil
+
 }
 
 // Insert will be used to insert a new pet registry
@@ -96,7 +121,7 @@ func (m *PetModel) FindByStatus(status []string) ([]Pet, error) {
 	}
 	// end find
 
-	var pets []Pet
+	var pets = []Pet{}
 	if err = cursor.All(context.TODO(), &pets); err != nil {
 		panic(err)
 	}
@@ -129,8 +154,7 @@ func (m *PetModel) FindBytags(tags []string) ([]Pet, error) {
 		panic(err)
 	}
 	// end find
-
-	var pets []Pet
+	var pets = []Pet{}
 	if err = cursor.All(context.TODO(), &pets); err != nil {
 		panic(err)
 	}

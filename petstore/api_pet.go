@@ -20,27 +20,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// add route for get all pets
-func (app *Application) GetPets(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	// Get all pets from database
-	model, err := app.pets.FindAll()
-	if err != nil {
-		app.serverError(w, err)
-	}
-
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
-	json.NewEncoder(w).Encode(model)
-	w.WriteHeader(http.StatusOK)
-
-}
-
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
@@ -54,12 +33,14 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	// Insert new Pets
 	insertResult, err := app.pets.Insert(m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	m.ID = insertResult.InsertedID.(primitive.ObjectID)
 
@@ -69,28 +50,28 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(m)
 
 }
-
 func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 
+	// Enable CORS
 	if r.Method == "OPTIONS" {
 		app.enableCors(&w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 	// Get id from incoming url
-	vars := mux.Vars(r)
-	id := vars["id"]
+	id := mux.Vars(r)["id"]
 
 	// Delete Pets by id
 	deleteResult, err := app.pets.Delete(id)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	app.infoLog.Printf("Have been eliminated %d pet(s)", deleteResult.DeletedCount)
 	app.enableCors(&w, r)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
@@ -111,10 +92,12 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
 			app.infoLog.Println("Pets not found")
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		// Any other error will send an internal server error
 		app.serverError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
@@ -141,16 +124,18 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
 			app.infoLog.Println("Pets not found")
+			model = []Pet{} // Return empty array instead of null
+		} else {
+			// Any other error will send an internal server error
+			app.serverError(w, err)
 			return
 		}
-		// Any other error will send an internal server error
-		app.serverError(w, err)
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(model)
 	app.enableCors(&w, r)
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model)
+	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
@@ -171,10 +156,12 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err.Error() == "ErrNoDocuments" {
 			app.infoLog.Println("Pets not found")
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		// Any other error will send an internal server error
 		app.serverError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
@@ -201,6 +188,7 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	//m.ID = bson.ObjectIdHex(id)
@@ -209,6 +197,7 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	insertResult, err := app.pets.Update(m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)

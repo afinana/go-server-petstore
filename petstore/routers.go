@@ -37,14 +37,6 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/",
 			app.Index,
 		},
-		// add route for get all pets
-		Route{
-			"GetPets",
-			strings.ToUpper("Get"),
-			"/v2/pet",
-			app.GetPets,
-		},
-
 		Route{
 			"AddPet",
 			strings.ToUpper("Post"),
@@ -184,6 +176,12 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/{username}",
 			app.UpdateUser,
 		},
+		Route{
+			"GetAllUsers",
+			strings.ToUpper("Get"),
+			"/v2/user",
+			app.GetAllUsers,
+		},
 	}
 
 	for _, route := range routes {
@@ -196,7 +194,10 @@ func (app *Application) NewRouter() *mux.Router {
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
+
 	}
+	// add metrics route
+	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
 	return router
 }

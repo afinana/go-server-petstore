@@ -8,10 +8,14 @@
             "name": "Launch file",
             "type": "go",
             "request": "launch",
-            "mode": "debug",
-           // "program": "${file}"
+            "mode": "debug",          
             "program": "${workspaceFolder}/main.go",
-            "args": [" -enableCredentials=false -serverPort=8080 -mongoDatabase=petstore -mongoURI=mongodb://root:example@localhost:27017/petstore?authSource=admin"]
+            "args": [ 
+                "-enableCredentials=false",
+                "-serverPort=8090",
+                "-mongoDatabase=petstore", 
+                "-mongoURI=mongodb://root:example@localhost:27017/petstore?authSource=admin"
+            ]
         }
 
     ]

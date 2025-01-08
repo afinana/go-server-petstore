@@ -22,13 +22,13 @@ import (
 // CreateUser adds a new user to the store
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf("CreateUser:: start")
-
+	// Enable CORS
 	if r.Method == "OPTIONS" {
 		app.enableCors(&w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
+	app.enableCors(&w, r)
 
 	// Define User model
 	var m User
@@ -47,7 +47,6 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("New user have been created, id=%s", insertResult.InsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -91,7 +90,7 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 
-	name := vars["name"]
+	name := vars["username"]
 	fmt.Printf("GetUserByName name: %s\n", name)
 
 	result, err := app.users.FindByUserName(name)
@@ -147,5 +146,19 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(&w, r)
+	w.WriteHeader(http.StatusOK)
+}
+
+// create get all users
+func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+
+	result, err := app.users.All()
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	app.enableCors(&w, r)
+	json.NewEncoder(w).Encode(result)
 	w.WriteHeader(http.StatusOK)
 }

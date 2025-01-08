@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,7 +29,7 @@ func main() {
 
 	// Define command-line flags
 	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 8080, "HTTP server network port")
+	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
 	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
 	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
 	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
@@ -57,7 +58,9 @@ func main() {
 	if err != nil {
 		errLog.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+
+	// create a context
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	err = client.Connect(ctx)
@@ -106,6 +109,23 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s", serverURI)
-	err = srv.ListenAndServe()
-	errLog.Fatal(err)
+	go func() {
+		err := srv.ListenAndServe()
+		if err != nil {
+			errLog.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	<-stop
+
+	infoLog.Println("Shutting down server...")
+
+	if err := srv.Shutdown(ctx); err != nil {
+		errLog.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	infoLog.Println("Server exiting")
 }
