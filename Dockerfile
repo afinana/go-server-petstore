@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 ## Build
 FROM golang:1.22 AS build
 
