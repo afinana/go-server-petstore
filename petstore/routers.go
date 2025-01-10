@@ -37,7 +37,6 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/",
 			app.Index,
 		},
-
 		Route{
 			"AddPet",
 			strings.ToUpper("Post"),
@@ -142,18 +141,6 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/createWithList",
 			app.CreateUsersWithListInput,
 		},
-		Route{
-			"GetAllUsers",
-			strings.ToUpper("Get"),
-			"/v2/user",
-			app.GetAllUsers,
-		},
-		Route{
-			"LoginUser",             // Corrected the route name
-			strings.ToUpper("Post"), // Changed method to Post
-			"/v2/user/login",
-			app.LoginUser,
-		},
 
 		Route{
 			"DeleteUser",
@@ -170,6 +157,13 @@ func (app *Application) NewRouter() *mux.Router {
 		},
 
 		Route{
+			"LoginUser",
+			strings.ToUpper("Get"),
+			"/v2/user/login",
+			app.LoginUser,
+		},
+
+		Route{
 			"LogoutUser",
 			strings.ToUpper("Get"),
 			"/v2/user/logout",
@@ -182,18 +176,10 @@ func (app *Application) NewRouter() *mux.Router {
 			"/v2/user/{username}",
 			app.UpdateUser,
 		},
-		// Added missing routes for user operations
-		Route{
-			"UpdateUser",
-			strings.ToUpper("Put"),
-			"/v2/user/{userId}",
-			app.UpdateUser,
-		},
-
 		Route{
 			"GetAllUsers",
 			strings.ToUpper("Get"),
-			"/v2/users",
+			"/v2/user",
 			app.GetAllUsers,
 		},
 	}
@@ -210,11 +196,10 @@ func (app *Application) NewRouter() *mux.Router {
 			Handler(handler)
 
 	}
-	// Add metrics route
+	// add metrics route
 	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
 	return router
-
 }
 
 func (app *Application) Index(w http.ResponseWriter, r *http.Request) {

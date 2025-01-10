@@ -13,7 +13,7 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -24,43 +24,27 @@ import (
 var Orders []Order
 
 func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
-	// Enable CORS
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	app.enableCors(&w, r)
 
 	vars := mux.Vars(r)
 
 	fmt.Printf("DeleteOrder::id is %s\n", vars["orderId"])
-	id, err := strconv.ParseInt(vars["orderId"], 10, 64) // Changed 32 to 64
+	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
 	if err != nil {
-		http.Error(w, "Invalid order ID", http.StatusBadRequest)
-		return
+		panic(err)
 	}
 
 	for index, order := range Orders {
-		if order.ID == id { // Changed int(order.ID) == int(id) to order.ID == id
+		if order.Id == id {
 			Orders = append(Orders[:index], Orders[index+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
 		}
 	}
 
-	http.Error(w, "Order not found", http.StatusNotFound)
+	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
-
-	// Enable CORS
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	app.enableCors(&w, r)
 
 	fmt.Println("GetInventory:: return all orders")
 	json.NewEncoder(w).Encode(Orders)
@@ -71,14 +55,6 @@ func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
-	// Enable CORS
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	app.enableCors(&w, r)
-
 	var result Order
 	vars := mux.Vars(r)
 
@@ -90,7 +66,7 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("GetOrderById id: %d\n", id)
 
 	for _, order := range Orders {
-		if order.ID == id {
+		if order.Id == id {
 			result = order
 
 		}
@@ -107,18 +83,10 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 
-	// Enable CORS
-	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	app.enableCors(&w, r)
-
 	// get the body of our POST request
 	// unmarshal this into a new Article struct
 	// append this to our Articles array.
-	reqBody, _ := ioutil.ReadAll(r.Body)
+	reqBody, _ := io.ReadAll(r.Body)
 	var order Order
 	json.Unmarshal(reqBody, &order)
 
