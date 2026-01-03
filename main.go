@@ -13,7 +13,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,8 +27,7 @@ import (
 func main() {
 
 	// Define command-line flags
-	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
+	serverAddr := flag.String("serverAddr", "localhost:8080", "HTTP server network address")
 	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
 	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
 	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
@@ -98,9 +96,8 @@ func main() {
 	)
 
 	// Initialize a new http.Server struct.
-	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
 	srv := &http.Server{
-		Addr:         serverURI,
+		Addr:         *serverAddr,
 		ErrorLog:     errLog,
 		Handler:      app.NewRouter(),
 		IdleTimeout:  time.Minute,
@@ -108,7 +105,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", serverURI)
+	infoLog.Printf("Starting server on %s", *serverAddr)
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
