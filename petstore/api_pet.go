@@ -103,7 +103,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(model)
-	//w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +135,7 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(&w, r)
 	json.NewEncoder(w).Encode(model)
-	//w.WriteHeader(http.StatusOK)
+
 }
 
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
