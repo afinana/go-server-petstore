@@ -33,7 +33,7 @@ go run main.go -enableCredentials=true -serverAddr=0.0.0.0 -serverPort=8080 -MON
 Using credentials in URL
 
 ```sh
-go run main.go -serverAddr=0.0.0.0 -serverPort=8080 -mongoDatabase=petstore -mongoURI=mongodb://root:example@localhost:27017
+go run main.go -serverAddr=0.0.0.0:8080 -mongoDatabase=petstore -mongoURI=mongodb://root:example@localhost:27017
 ```
 
 
