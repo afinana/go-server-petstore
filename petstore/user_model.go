@@ -18,7 +18,7 @@ type UserModel struct {
 func (m *UserModel) All() ([]User, error) {
 	// Define variables
 	ctx := context.TODO()
-	b := []User{}
+	var b []User
 
 	// Find all users
 	userCursor, err := m.C.Find(ctx, bson.M{})

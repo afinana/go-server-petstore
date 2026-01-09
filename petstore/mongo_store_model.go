@@ -18,7 +18,7 @@ type StoreModel struct {
 func (m *StoreModel) All() ([]Order, error) {
 	// Define variables
 	ctx := context.TODO()
-	b := []Order{}
+	var b []Order
 
 	// Find all orders
 	orderCursor, err := m.C.Find(ctx, bson.M{})
