@@ -27,7 +27,7 @@ go run main.go
 Using credentials
 
 ```sh
-go run main.go -enableCredentials=true -serverAddr=0.0.0.0 -serverPort=8080 -MONGODB_USERNAME=root MONGODB_PASSWORD=example -mongoDatabase=petstore -mongoURI=mongodb://mongo:27017
+go run main.go -enableCredentials=true -serverAddr=0.0.0.0:8080 -MONGODB_USERNAME=root MONGODB_PASSWORD=example -mongoDatabase=petstore -mongoURI=mongodb://mongo:27017
 ```
 
 Using credentials in URL
