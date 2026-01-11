@@ -24,11 +24,11 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Enable CORS
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 
 	// Define User model
 	var m User
@@ -52,20 +52,20 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -81,7 +81,7 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("Have been eliminated %d user(s)", deleteResult.DeletedCount)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -104,27 +104,27 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -145,7 +145,7 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -158,7 +158,7 @@ func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
 	w.WriteHeader(http.StatusOK)
 }

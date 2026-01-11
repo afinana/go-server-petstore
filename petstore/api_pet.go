@@ -23,7 +23,7 @@ import (
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -46,7 +46,7 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	app.infoLog.Printf("New pet have been created, id=%s", insertResult.InsertedID)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(m)
 
 }
@@ -54,7 +54,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 
 	// Enable CORS
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -69,7 +69,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.infoLog.Printf("Have been eliminated %d pet(s)", deleteResult.DeletedCount)
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 
 }
@@ -77,7 +77,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -101,7 +101,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(model)
 
 }
@@ -109,7 +109,7 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -133,7 +133,7 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(model)
 
 }
@@ -141,7 +141,7 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -165,7 +165,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	if reflect.ValueOf(model).IsZero() {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
@@ -178,7 +178,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -203,29 +203,29 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(m)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UploadFile(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" {
-		app.enableCors(&w, r)
+		app.enableCors(w, r)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(&w, r)
+	app.enableCors(w, r)
 	w.WriteHeader(http.StatusOK)
 }
