@@ -27,24 +27,38 @@ import (
 func main() {
 
 	// Define command-line flags
-	serverAddr := flag.String("serverAddr", "localhost:8080", "HTTP server network address")
-	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
-	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
-	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
-	flag.Parse()
+	serverAddr := os.Getenv("SERVER_ADDR")
+	if serverAddr == "" {
+		serverAddr = "localhost:8080"
+	}
+
+	mongoURI := os.Getenv("MONGODB_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+	mongoDatabase := os.Getenv("MONGODB_DATABASE")
+	if mongoDatabase == "" {
+		mongoDatabase = "petstore"
+	}
+
+	enableCredentialsEnv := os.Getenv("ENABLE_CREDENTIALS")
+	enableCredentials := false
+	if enableCredentialsEnv == "true" {
+		enableCredentials = true
+	}
 
 	// Create logger for writing information and error messages.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// show mongoURI and mongoDatabase and enableCredentials
-	infoLog.Printf("mongoURI: %s", *mongoURI)
-	infoLog.Printf("mongoDatabase: %s", *mongoDatabase)
-	infoLog.Printf("enableCredentials: %t", *enableCredentials)
+	infoLog.Printf("mongoURI: %s", mongoURI)
+	infoLog.Printf("mongoDatabase: %s", mongoDatabase)
+	infoLog.Printf("enableCredentials: %t", enableCredentials)
 
 	// Create mongo client configuration
-	co := options.Client().ApplyURI(*mongoURI)
-	if *enableCredentials {
+	co := options.Client().ApplyURI(mongoURI)
+	if enableCredentials {
 		co.Auth = &options.Credential{
 			Username: os.Getenv("MONGODB_USERNAME"),
 			Password: os.Getenv("MONGODB_PASSWORD"),
@@ -85,19 +99,19 @@ func main() {
 		infoLog,
 		errLog,
 		&api.PetModel{
-			C: client.Database(*mongoDatabase).Collection("pets"),
+			C: client.Database(mongoDatabase).Collection("pets"),
 		},
 		&api.StoreModel{
-			C: client.Database(*mongoDatabase).Collection("stores"),
+			C: client.Database(mongoDatabase).Collection("stores"),
 		},
 		&api.UserModel{
-			C: client.Database(*mongoDatabase).Collection("users"),
+			C: client.Database(mongoDatabase).Collection("users"),
 		},
 	)
 
 	// Initialize a new http.Server struct.
 	srv := &http.Server{
-		Addr:         *serverAddr,
+		Addr:         serverAddr,
 		ErrorLog:     errLog,
 		Handler:      app.NewRouter(),
 		IdleTimeout:  time.Minute,
@@ -105,7 +119,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", *serverAddr)
+	infoLog.Printf("Starting server on %s", serverAddr)
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
