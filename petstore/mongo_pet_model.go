@@ -82,7 +82,12 @@ func (m *PetModel) Update(ctx context.Context, pet Pet) (*mongo.UpdateResult, er
 func (m *PetModel) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, err
+		// If not hex, try to delete by numeric ID
+		index, err := strconv.Atoi(id)
+		if err != nil {
+			return nil, err
+		}
+		return m.C.DeleteOne(ctx, bson.M{"id": index})
 	}
 	return m.C.DeleteOne(ctx, bson.M{"_id": p})
 }

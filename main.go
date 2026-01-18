@@ -24,43 +24,23 @@ import (
 )
 
 func main() {
-
-	// Define command-line flags
-	serverAddr := os.Getenv("serverAddr")
-	if serverAddr == "" {
-		serverAddr = "localhost:8080"
-	}
-
-	mongoURI := os.Getenv("databaseURI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017"
-	}
-	mongoDatabase := os.Getenv("MONGODB_DATABASE")
-	if mongoDatabase == "" {
-		mongoDatabase = "petstore"
-	}
-
-	enableCredentialsEnv := os.Getenv("ENABLE_CREDENTIALS")
-	enableCredentials := false
-	if enableCredentialsEnv == "true" {
-		enableCredentials = true
-	}
+	cfg := api.LoadConfig()
 
 	// Create logger for writing information and error messages.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// show mongoURI and mongoDatabase and enableCredentials
-	infoLog.Printf("mongoURI: %s", mongoURI)
-	infoLog.Printf("mongoDatabase: %s", mongoDatabase)
-	infoLog.Printf("enableCredentials: %t", enableCredentials)
+	// show config
+	infoLog.Printf("mongoURI: %s", cfg.MongoURI)
+	infoLog.Printf("mongoDatabase: %s", cfg.MongoDatabase)
+	infoLog.Printf("enableCredentials: %t", cfg.EnableCredentials)
 
 	// Create mongo client configuration
-	co := options.Client().ApplyURI(mongoURI)
-	if enableCredentials {
+	co := options.Client().ApplyURI(cfg.MongoURI)
+	if cfg.EnableCredentials {
 		co.Auth = &options.Credential{
-			Username: os.Getenv("MONGODB_USERNAME"),
-			Password: os.Getenv("MONGODB_PASSWORD"),
+			Username: cfg.MongoUsername,
+			Password: cfg.MongoPassword,
 		}
 	}
 
@@ -88,19 +68,19 @@ func main() {
 		infoLog,
 		errLog,
 		&api.PetModel{
-			C: client.Database(mongoDatabase).Collection("pets"),
+			C: client.Database(cfg.MongoDatabase).Collection("pets"),
 		},
 		&api.StoreModel{
-			C: client.Database(mongoDatabase).Collection("stores"),
+			C: client.Database(cfg.MongoDatabase).Collection("stores"),
 		},
 		&api.UserModel{
-			C: client.Database(mongoDatabase).Collection("users"),
+			C: client.Database(cfg.MongoDatabase).Collection("users"),
 		},
 	)
 
 	// Initialize a new http.Server struct.
 	srv := &http.Server{
-		Addr:         serverAddr,
+		Addr:         cfg.ServerAddr,
 		ErrorLog:     errLog,
 		Handler:      app.NewRouter(),
 		IdleTimeout:  time.Minute,
@@ -108,7 +88,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", serverAddr)
+	infoLog.Printf("Starting server on %s", cfg.ServerAddr)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errLog.Fatalf("Server failed to start: %v", err)

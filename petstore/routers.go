@@ -190,12 +190,14 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method, "OPTIONS").
+			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
-
 	}
+
+	router.Use(app.Middleware)
+
 	// add metrics route
 	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
