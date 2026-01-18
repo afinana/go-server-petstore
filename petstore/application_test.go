@@ -5,22 +5,30 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
-func TestEnableCorsSetsHeaders(t *testing.T) {
+func TestMiddlewareSetsHeaders(t *testing.T) {
 	app := &Application{infoLog: log.New(io.Discard, "", 0), errorLog: log.New(io.Discard, "", 0)}
+
+	nextHandler := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})
+	handlerToTest := app.Middleware(nextHandler)
 
 	req := httptest.NewRequest("GET", "http://example.local/", nil)
 	req.Header.Set("Origin", "http://origin.test")
 	rr := httptest.NewRecorder()
 
-	// enableCors expects an http.ResponseWriter
-	app.enableCors(rr, req)
+	handlerToTest.ServeHTTP(rr, req)
 
 	got := rr.Header().Get("Access-Control-Allow-Origin")
 	if got != "http://origin.test" {
 		t.Fatalf("expected Access-Control-Allow-Origin header set, got %q", got)
+	}
+
+	contentType := rr.Header().Get("Content-Type")
+	if !strings.HasPrefix(contentType, "application/json") {
+		t.Fatalf("expected Content-Type header set, got %q", contentType)
 	}
 }
 

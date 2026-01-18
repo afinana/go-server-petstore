@@ -13,7 +13,6 @@ package petstore
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,21 +22,11 @@ import (
 
 // CreateUser adds a new user to the store
 func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
-
-	// Enable CORS
-	if r.Method == "OPTIONS" {
-		app.enableCors(w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	app.enableCors(w, r)
-
-	// Define User model
 	var m User
-	// Get request information
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	// Insert new Users
@@ -49,34 +38,21 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	m.ID = insertResult.InsertedID.(primitive.ObjectID)
 
 	app.infoLog.Printf("New user have been created, id=%s", insertResult.InsertedID)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	app.WriteJSON(w, http.StatusOK, m)
 }
 
-func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
+func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, _ *http.Request) {
+	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }
 
-func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
+func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, _ *http.Request) {
+	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }
 
 func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method == "OPTIONS" {
-		app.enableCors(w, r)
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	// Get id from incoming url
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Delete Users by id
 	deleteResult, err := app.users.Delete(r.Context(), id)
 	if err != nil {
 		app.serverError(w, err)
@@ -84,66 +60,43 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.infoLog.Printf("Have been eliminated %d user(s)", deleteResult.DeletedCount)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
-
+	app.WriteJSON(w, http.StatusOK, map[string]int64{"deletedCount": deleteResult.DeletedCount})
 }
 
 func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
-
 	vars := mux.Vars(r)
-
 	name := vars["username"]
-	fmt.Printf("GetUserByName name: %s\n", name)
 
 	result, err := app.users.FindByUserName(r.Context(), name)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			app.infoLog.Printf("User not found")
-			w.WriteHeader(http.StatusNotFound)
-			return
-		} else {
-			app.serverError(w, err)
+			app.ErrorResponse(w, http.StatusNotFound, "User not found")
 			return
 		}
-	}
-
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	json.NewEncoder(w).Encode(result)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
-}
-
-func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method == "OPTIONS" {
-		app.enableCors(w, r)
-		w.WriteHeader(http.StatusOK)
+		app.serverError(w, err)
 		return
 	}
 
-	// Define User model
+	app.WriteJSON(w, http.StatusOK, result)
+}
+
+func (app *Application) LoginUser(w http.ResponseWriter, _ *http.Request) {
+	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "logged in"})
+}
+
+func (app *Application) LogoutUser(w http.ResponseWriter, _ *http.Request) {
+	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "logged out"})
+}
+
+func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var m User
-	// Get request information
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
-	// Update Users
 	updateResult, err := app.users.Update(r.Context(), m.ID.String(), m)
 	if err != nil {
 		app.serverError(w, err)
@@ -151,22 +104,15 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	w.WriteHeader(http.StatusOK)
+	app.WriteJSON(w, http.StatusOK, m)
 }
 
-// create get all users
 func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-
 	result, err := app.users.All(r.Context())
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	json.NewEncoder(w).Encode(result)
-	w.WriteHeader(http.StatusOK)
+	app.WriteJSON(w, http.StatusOK, result)
 }
