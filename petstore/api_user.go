@@ -12,11 +12,13 @@ package petstore
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // CreateUser adds a new user to the store
@@ -39,9 +41,10 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new Users
-	insertResult, err := app.users.Insert(m)
+	insertResult, err := app.users.Insert(r.Context(), m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 	m.ID = insertResult.InsertedID.(primitive.ObjectID)
 
@@ -74,9 +77,10 @@ func (app *Application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	// Delete Users by id
-	deleteResult, err := app.users.Delete(id)
+	deleteResult, err := app.users.Delete(r.Context(), id)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	app.infoLog.Printf("Have been eliminated %d user(s)", deleteResult.DeletedCount)
@@ -93,13 +97,15 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	name := vars["username"]
 	fmt.Printf("GetUserByName name: %s\n", name)
 
-	result, err := app.users.FindByUserName(name)
+	result, err := app.users.FindByUserName(r.Context(), name)
 	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			app.infoLog.Printf("User not found")
 			w.WriteHeader(http.StatusNotFound)
+			return
 		} else {
 			app.serverError(w, err)
+			return
 		}
 	}
 
@@ -138,9 +144,10 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update Users
-	updateResult, err := app.users.Update(m.ID.String(), m)
+	updateResult, err := app.users.Update(r.Context(), m.ID.String(), m)
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	app.infoLog.Printf("User have been updated, id=%s", updateResult.UpsertedID)
@@ -152,9 +159,10 @@ func (app *Application) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // create get all users
 func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
-	result, err := app.users.All()
+	result, err := app.users.All(r.Context())
 	if err != nil {
 		app.serverError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")

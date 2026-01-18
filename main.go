@@ -65,34 +65,24 @@ func main() {
 	}
 
 	// Establish database connection
-	client, err := mongo.NewClient(co)
-	if err != nil {
-		errLog.Fatal(err)
-	}
-
-	// create a context
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = client.Connect(ctx)
+	client, err := mongo.Connect(ctx, co)
 	if err != nil {
 		errLog.Fatal(err)
 	}
 
 	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
+		// Use a fresh context for disconnection
+		disconnectCtx, disconnectCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer disconnectCancel()
+		if err = client.Disconnect(disconnectCtx); err != nil {
+			errLog.Printf("Error disconnecting from MongoDB: %v", err)
 		}
 	}()
 
 	infoLog.Printf("Database connection established")
-
-	if err != nil {
-		return
-	}
-	if err != nil {
-		return
-	}
 
 	app := api.NewLog(
 		infoLog,
@@ -120,8 +110,7 @@ func main() {
 
 	infoLog.Printf("Starting server on %s", serverAddr)
 	go func() {
-		err := srv.ListenAndServe()
-		if err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errLog.Fatalf("Server failed to start: %v", err)
 		}
 	}()
@@ -133,7 +122,11 @@ func main() {
 
 	infoLog.Println("Shutting down server...")
 
-	if err := srv.Shutdown(ctx); err != nil {
+	// Use a fresh context for shutdown
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		errLog.Fatalf("Server forced to shutdown: %v", err)
 	}
 
