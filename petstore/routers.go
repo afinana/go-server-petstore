@@ -204,6 +204,6 @@ func (app *Application) NewRouter() *mux.Router {
 	return router
 }
 
-func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
+func (app *Application) Index(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprintf(w, "Welcome to the homepage!")
 }

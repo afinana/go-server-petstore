@@ -42,7 +42,7 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
+func (app *Application) GetInventory(w http.ResponseWriter, _ *http.Request) {
 
 	fmt.Println("GetInventory:: return all orders")
 	app.WriteJSON(w, http.StatusOK, Orders)
