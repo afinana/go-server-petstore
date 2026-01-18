@@ -12,12 +12,14 @@ package petstore
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,7 @@ func (app *Application) AddPet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert new Pets
-	insertResult, err := app.pets.Insert(m)
+	insertResult, err := app.pets.Insert(r.Context(), m)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -62,7 +64,7 @@ func (app *Application) DeletePet(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	// Delete Pets by id
-	deleteResult, err := app.pets.Delete(id)
+	deleteResult, err := app.pets.Delete(r.Context(), id)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -87,10 +89,12 @@ func (app *Application) FindPetsByStatus(w http.ResponseWriter, r *http.Request)
 	var model []Pet
 	status := strings.Split(status_query, ",")
 
-	// Find Pets by id
-	model, err := app.pets.FindByStatus(status)
+	// Find Pets by status
+	var err error
+	model, err = app.pets.FindByStatus(r.Context(), status)
 	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
+		// Use errors.Is to check for mongo.ErrNoDocuments
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			app.infoLog.Println("Pets not found")
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -119,10 +123,11 @@ func (app *Application) FindPetsByTags(w http.ResponseWriter, r *http.Request) {
 	var model []Pet
 	tags := strings.Split(tag_query, ",")
 
-	// Find Pets by id
-	model, err := app.pets.FindBytags(tags)
+	// Find Pets by tags
+	var err error
+	model, err = app.pets.FindByTags(r.Context(), tags)
 	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			app.infoLog.Println("Pets not found")
 			model = []Pet{} // Return empty array instead of null
 		} else {
@@ -152,9 +157,9 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Printf("Get pet by id=%s \n", id)
 
 	// Find Pets by id
-	model, err := app.pets.FindByID(id)
+	model, err := app.pets.FindByID(r.Context(), id)
 	if err != nil {
-		if err.Error() == "ErrNoDocuments" {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			app.infoLog.Println("Pets not found")
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -193,14 +198,14 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 
 	//m.ID = bson.ObjectIdHex(id)
 
-	// Insert new Pets
-	insertResult, err := app.pets.Update(m)
+	// Update existing Pet
+	updateResult, err := app.pets.Update(r.Context(), m)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	app.infoLog.Printf("New pet have been created, id=%s \n", insertResult.InsertedID)
+	app.infoLog.Printf("Pet has been updated, upserted_id=%v \n", updateResult.UpsertedID)
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(w, r)

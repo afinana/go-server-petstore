@@ -2,7 +2,6 @@ package petstore
 
 import (
 	"context"
-	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,9 +14,7 @@ type StoreModel struct {
 }
 
 // All method will be used to get all records from orders table
-func (m *StoreModel) All() ([]Order, error) {
-	// Define variables
-	ctx := context.TODO()
+func (m *StoreModel) All(ctx context.Context) ([]Order, error) {
 	var b []Order
 
 	// Find all orders
@@ -30,11 +27,11 @@ func (m *StoreModel) All() ([]Order, error) {
 		return nil, err
 	}
 
-	return b, err
+	return b, nil
 }
 
 // FindByID will be used to find a order registry by id
-func (m *StoreModel) FindByID(id string) (*Order, error) {
+func (m *StoreModel) FindByID(ctx context.Context, id string) (*Order, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -42,12 +39,8 @@ func (m *StoreModel) FindByID(id string) (*Order, error) {
 
 	// Find order by id
 	var order = Order{}
-	err = m.C.FindOne(context.TODO(), bson.M{"_id": p}).Decode(&order)
+	err = m.C.FindOne(ctx, bson.M{"_id": p}).Decode(&order)
 	if err != nil {
-		// Checks if the order was not found
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("ErrNoDocuments")
-		}
 		return nil, err
 	}
 
@@ -55,15 +48,15 @@ func (m *StoreModel) FindByID(id string) (*Order, error) {
 }
 
 // Insert will be used to insert a new order registry
-func (m *StoreModel) Insert(order Order) (*mongo.InsertOneResult, error) {
-	return m.C.InsertOne(context.TODO(), order)
+func (m *StoreModel) Insert(ctx context.Context, order Order) (*mongo.InsertOneResult, error) {
+	return m.C.InsertOne(ctx, order)
 }
 
 // Delete will be used to delete a order registry
-func (m *StoreModel) Delete(id string) (*mongo.DeleteResult, error) {
+func (m *StoreModel) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	return m.C.DeleteOne(context.TODO(), bson.M{"_id": p})
+	return m.C.DeleteOne(ctx, bson.M{"_id": p})
 }
