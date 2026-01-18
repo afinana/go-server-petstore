@@ -12,7 +12,7 @@ import (
 func TestMiddlewareSetsHeaders(t *testing.T) {
 	app := &Application{infoLog: log.New(io.Discard, "", 0), errorLog: log.New(io.Discard, "", 0)}
 
-	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	nextHandler := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})
 	handlerToTest := app.Middleware(nextHandler)
 
 	req := httptest.NewRequest("GET", "http://example.local/", nil)

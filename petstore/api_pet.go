@@ -143,10 +143,10 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	app.WriteJSON(w, http.StatusOK, m)
 }
 
-func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
+func (app *Application) UpdatePetWithForm(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }
 
-func (app *Application) UploadFile(w http.ResponseWriter, r *http.Request) {
+func (app *Application) UploadFile(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }

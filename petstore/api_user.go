@@ -41,11 +41,11 @@ func (app *Application) CreateUser(w http.ResponseWriter, r *http.Request) {
 	app.WriteJSON(w, http.StatusOK, m)
 }
 
-func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, r *http.Request) {
+func (app *Application) CreateUsersWithArrayInput(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }
 
-func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, r *http.Request) {
+func (app *Application) CreateUsersWithListInput(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "not implemented"})
 }
 
@@ -81,11 +81,11 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	app.WriteJSON(w, http.StatusOK, result)
 }
 
-func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
+func (app *Application) LoginUser(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "logged in"})
 }
 
-func (app *Application) LogoutUser(w http.ResponseWriter, r *http.Request) {
+func (app *Application) LogoutUser(w http.ResponseWriter, _ *http.Request) {
 	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "logged out"})
 }
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (app *Application) Middleware(next http.Handler) http.Handler {
+func (*Application) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Enable CORS
 		allowedHeaders := "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-CSRF-Token"
