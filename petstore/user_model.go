@@ -2,7 +2,6 @@ package petstore
 
 import (
 	"context"
-	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,10 +14,8 @@ type UserModel struct {
 }
 
 // All method will be used to get all records from users table
-func (m *UserModel) All() ([]User, error) {
-	// Define variables
-	ctx := context.TODO()
-	b := []User{}
+func (m *UserModel) All(ctx context.Context) ([]User, error) {
+	var b []User
 
 	// Find all users
 	userCursor, err := m.C.Find(ctx, bson.M{})
@@ -30,11 +27,11 @@ func (m *UserModel) All() ([]User, error) {
 		return nil, err
 	}
 
-	return b, err
+	return b, nil
 }
 
 // FindByID will be used to find a user registry by id
-func (m *UserModel) FindByID(id string) (*User, error) {
+func (m *UserModel) FindByID(ctx context.Context, id string) (*User, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -42,12 +39,8 @@ func (m *UserModel) FindByID(id string) (*User, error) {
 
 	// Find user by id
 	var user = User{}
-	err = m.C.FindOne(context.TODO(), bson.M{"_id": p}).Decode(&user)
+	err = m.C.FindOne(ctx, bson.M{"_id": p}).Decode(&user)
 	if err != nil {
-		// Checks if the user was not found
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("ErrNoDocuments")
-		}
 		return nil, err
 	}
 
@@ -55,38 +48,34 @@ func (m *UserModel) FindByID(id string) (*User, error) {
 }
 
 // Insert will be used to insert a new user registry
-func (m *UserModel) Insert(user User) (*mongo.InsertOneResult, error) {
-	return m.C.InsertOne(context.TODO(), user)
+func (m *UserModel) Insert(ctx context.Context, user User) (*mongo.InsertOneResult, error) {
+	return m.C.InsertOne(ctx, user)
 }
 
 // Delete will be used to delete a user registry
-func (m *UserModel) Delete(id string) (*mongo.DeleteResult, error) {
+func (m *UserModel) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	return m.C.DeleteOne(context.TODO(), bson.M{"_id": p})
+	return m.C.DeleteOne(ctx, bson.M{"_id": p})
 }
 
 // Update will be used to update a user registry
-func (m *UserModel) Update(id string, user User) (*mongo.UpdateResult, error) {
+func (m *UserModel) Update(ctx context.Context, id string, user User) (*mongo.UpdateResult, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	return m.C.UpdateOne(context.TODO(), bson.M{"_id": p}, bson.M{"$set": user})
+	return m.C.UpdateOne(ctx, bson.M{"_id": p}, bson.M{"$set": user})
 }
 
 // FindByUserName will be used to find a user registry by username
-func (m *UserModel) FindByUserName(username string) (*User, error) {
+func (m *UserModel) FindByUserName(ctx context.Context, username string) (*User, error) {
 	// Find user by username
 	var user = User{}
-	err := m.C.FindOne(context.TODO(), bson.M{"username": username}).Decode(&user)
+	err := m.C.FindOne(ctx, bson.M{"username": username}).Decode(&user)
 	if err != nil {
-		// Checks if the user was not found
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("ErrNoDocuments")
-		}
 		return nil, err
 	}
 

@@ -12,8 +12,6 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,25 +26,38 @@ import (
 func main() {
 
 	// Define command-line flags
-	serverAddr := flag.String("serverAddr", "localhost", "HTTP server network address")
-	serverPort := flag.Int("serverPort", 8090, "HTTP server network port")
-	mongoURI := flag.String("mongoURI", "mongodb://localhost:27017", "Database hostname url")
-	mongoDatabase := flag.String("mongoDatabase", "petstore", "Database name")
-	enableCredentials := flag.Bool("enableCredentials", false, "Enable the use of credentials for mongo connection")
-	flag.Parse()
+	serverAddr := os.Getenv("serverAddr")
+	if serverAddr == "" {
+		serverAddr = "localhost:8080"
+	}
+
+	mongoURI := os.Getenv("databaseURI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+	mongoDatabase := os.Getenv("MONGODB_DATABASE")
+	if mongoDatabase == "" {
+		mongoDatabase = "petstore"
+	}
+
+	enableCredentialsEnv := os.Getenv("ENABLE_CREDENTIALS")
+	enableCredentials := false
+	if enableCredentialsEnv == "true" {
+		enableCredentials = true
+	}
 
 	// Create logger for writing information and error messages.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// show mongoURI and mongoDatabase and enableCredentials
-	infoLog.Printf("mongoURI: %s", *mongoURI)
-	infoLog.Printf("mongoDatabase: %s", *mongoDatabase)
-	infoLog.Printf("enableCredentials: %t", *enableCredentials)
+	infoLog.Printf("mongoURI: %s", mongoURI)
+	infoLog.Printf("mongoDatabase: %s", mongoDatabase)
+	infoLog.Printf("enableCredentials: %t", enableCredentials)
 
 	// Create mongo client configuration
-	co := options.Client().ApplyURI(*mongoURI)
-	if *enableCredentials {
+	co := options.Client().ApplyURI(mongoURI)
+	if enableCredentials {
 		co.Auth = &options.Credential{
 			Username: os.Getenv("MONGODB_USERNAME"),
 			Password: os.Getenv("MONGODB_PASSWORD"),
@@ -54,53 +65,42 @@ func main() {
 	}
 
 	// Establish database connection
-	client, err := mongo.NewClient(co)
-	if err != nil {
-		errLog.Fatal(err)
-	}
-
-	// create a context
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err = client.Connect(ctx)
+	client, err := mongo.Connect(ctx, co)
 	if err != nil {
 		errLog.Fatal(err)
 	}
 
 	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
+		// Use a fresh context for disconnection
+		disconnectCtx, disconnectCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer disconnectCancel()
+		if err = client.Disconnect(disconnectCtx); err != nil {
+			errLog.Printf("Error disconnecting from MongoDB: %v", err)
 		}
 	}()
 
 	infoLog.Printf("Database connection established")
 
-	if err != nil {
-		return
-	}
-	if err != nil {
-		return
-	}
-
 	app := api.NewLog(
 		infoLog,
 		errLog,
 		&api.PetModel{
-			C: client.Database(*mongoDatabase).Collection("pets"),
+			C: client.Database(mongoDatabase).Collection("pets"),
 		},
 		&api.StoreModel{
-			C: client.Database(*mongoDatabase).Collection("stores"),
+			C: client.Database(mongoDatabase).Collection("stores"),
 		},
 		&api.UserModel{
-			C: client.Database(*mongoDatabase).Collection("users"),
+			C: client.Database(mongoDatabase).Collection("users"),
 		},
 	)
 
 	// Initialize a new http.Server struct.
-	serverURI := fmt.Sprintf("%s:%d", *serverAddr, *serverPort)
 	srv := &http.Server{
-		Addr:         serverURI,
+		Addr:         serverAddr,
 		ErrorLog:     errLog,
 		Handler:      app.NewRouter(),
 		IdleTimeout:  time.Minute,
@@ -108,10 +108,9 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", serverURI)
+	infoLog.Printf("Starting server on %s", serverAddr)
 	go func() {
-		err := srv.ListenAndServe()
-		if err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errLog.Fatalf("Server failed to start: %v", err)
 		}
 	}()
@@ -123,7 +122,11 @@ func main() {
 
 	infoLog.Println("Shutting down server...")
 
-	if err := srv.Shutdown(ctx); err != nil {
+	// Use a fresh context for shutdown
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		errLog.Fatalf("Server forced to shutdown: %v", err)
 	}
 

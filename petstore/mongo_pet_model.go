@@ -2,7 +2,6 @@ package petstore
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,10 +14,8 @@ type PetModel struct {
 	C *mongo.Collection
 }
 
-// All method will be used to get all records from pets table
-func (m *PetModel) FindAll() ([]Pet, error) {
-	// Define variables
-	ctx := context.TODO()
+// FindAll method will be used to get all records from pets table
+func (m *PetModel) FindAll(ctx context.Context) ([]Pet, error) {
 	var pets = []Pet{}
 
 	// Find all pets
@@ -31,11 +28,11 @@ func (m *PetModel) FindAll() ([]Pet, error) {
 		return nil, err
 	}
 
-	return pets, err
+	return pets, nil
 }
 
-// FindByID will be used to find a pet registry by id
-func (m *PetModel) FindByHexID(id string) (*Pet, error) {
+// FindByHexID will be used to find a pet registry by id
+func (m *PetModel) FindByHexID(ctx context.Context, id string) (*Pet, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -43,12 +40,8 @@ func (m *PetModel) FindByHexID(id string) (*Pet, error) {
 
 	// Find pet by id
 	var pet = Pet{}
-	err = m.C.FindOne(context.TODO(), bson.M{"_id": p}).Decode(&pet)
+	err = m.C.FindOne(ctx, bson.M{"_id": p}).Decode(&pet)
 	if err != nil {
-		// Checks if the pet was not found
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("ErrNoDocuments")
-		}
 		return nil, err
 	}
 
@@ -56,7 +49,7 @@ func (m *PetModel) FindByHexID(id string) (*Pet, error) {
 }
 
 // FindByID will be used to find a pet registry by id
-func (m *PetModel) FindByID(id string) (*Pet, error) {
+func (m *PetModel) FindByID(ctx context.Context, id string) (*Pet, error) {
 
 	// convert id to number
 	index, err := strconv.Atoi(id)
@@ -66,12 +59,8 @@ func (m *PetModel) FindByID(id string) (*Pet, error) {
 
 	// Find pet by id
 	var pet = Pet{}
-	err = m.C.FindOne(context.TODO(), bson.M{"id": index}).Decode(&pet)
+	err = m.C.FindOne(ctx, bson.M{"id": index}).Decode(&pet)
 	if err != nil {
-		// Checks if the pet was not found
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("ErrNoDocuments")
-		}
 		return nil, err
 	}
 
@@ -80,33 +69,26 @@ func (m *PetModel) FindByID(id string) (*Pet, error) {
 }
 
 // Insert will be used to insert a new pet registry
-func (m *PetModel) Insert(pet Pet) (*mongo.InsertOneResult, error) {
-	return m.C.InsertOne(context.TODO(), pet)
+func (m *PetModel) Insert(ctx context.Context, pet Pet) (*mongo.InsertOneResult, error) {
+	return m.C.InsertOne(ctx, pet)
 }
 
-// Insert will be used to insert a new pet registry
-func (m *PetModel) Update(pet Pet) (*mongo.InsertOneResult, error) {
-	return m.C.InsertOne(context.TODO(), pet)
+// Update will be used to update an existing pet registry
+func (m *PetModel) Update(ctx context.Context, pet Pet) (*mongo.UpdateResult, error) {
+	return m.C.UpdateOne(ctx, bson.M{"_id": pet.ID}, bson.M{"$set": pet})
 }
 
 // Delete will be used to delete a pet registry
-func (m *PetModel) Delete(id string) (*mongo.DeleteResult, error) {
+func (m *PetModel) Delete(ctx context.Context, id string) (*mongo.DeleteResult, error) {
 	p, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
-	return m.C.DeleteOne(context.TODO(), bson.M{"_id": p})
+	return m.C.DeleteOne(ctx, bson.M{"_id": p})
 }
 
 // FindByStatus will be used to find a pet registry by status
-func (m *PetModel) FindByStatus(status []string) ([]Pet, error) {
-
-	// db.getCollection('pets').find({
-	//     $or: [
-	//          {'status': 'tag01'} ,
-	//          {'status': 'tag02'}
-	//     ]
-	// });
+func (m *PetModel) FindByStatus(ctx context.Context, status []string) ([]Pet, error) {
 	var filters []bson.M
 	for _, item := range status {
 		filters = append(filters,
@@ -115,31 +97,21 @@ func (m *PetModel) FindByStatus(status []string) ([]Pet, error) {
 	// filter is a single filter document that merges all filters
 	filter := bson.M{"$or": filters}
 
-	cursor, err := m.C.Find(context.TODO(), filter)
+	cursor, err := m.C.Find(ctx, filter)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	// end find
 
 	var pets = []Pet{}
-	if err = cursor.All(context.TODO(), &pets); err != nil {
-		panic(err)
+	if err = cursor.All(ctx, &pets); err != nil {
+		return nil, err
 	}
 
 	return pets, nil
 }
 
-// FindByStatus will be used to find a pet registry by status
-
-func (m *PetModel) FindBytags(tags []string) ([]Pet, error) {
-
-	// begin find
-	// db.getCollection('pets').find({
-	//     $or: [
-	//          {'tags': {'$elemMatch': {'name': 'tag01'} } },
-	//          {'tags': {'$elemMatch': {'name': 'tag02'} } }
-	//     ]
-	// });
+// FindByTags will be used to find a pet registry by tags
+func (m *PetModel) FindByTags(ctx context.Context, tags []string) ([]Pet, error) {
 
 	var filters []bson.M
 	for _, tag := range tags {
@@ -149,14 +121,14 @@ func (m *PetModel) FindBytags(tags []string) ([]Pet, error) {
 	// filter is a single filter document that merges all filters
 	filter := bson.M{"$or": filters}
 
-	cursor, err := m.C.Find(context.TODO(), filter)
+	cursor, err := m.C.Find(ctx, filter)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	// end find
+
 	var pets = []Pet{}
-	if err = cursor.All(context.TODO(), &pets); err != nil {
-		panic(err)
+	if err = cursor.All(ctx, &pets); err != nil {
+		return nil, err
 	}
 
 	return pets, nil
