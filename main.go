@@ -26,12 +26,12 @@ import (
 func main() {
 
 	// Define command-line flags
-	serverAddr := os.Getenv("SERVER_ADDR")
+	serverAddr := os.Getenv("serverAddr")
 	if serverAddr == "" {
 		serverAddr = "localhost:8080"
 	}
 
-	mongoURI := os.Getenv("MONGODB_URI")
+	mongoURI := os.Getenv("databaseURI")
 	if mongoURI == "" {
 		mongoURI = "mongodb://localhost:27017"
 	}
