@@ -34,152 +34,152 @@ func (app *Application) NewRouter() *mux.Router {
 		Route{
 			"Index",
 			"GET",
-			"/petstore/v2/",
+			"/v2/pet",
 			app.Index,
 		},
 		Route{
 			"AddPet",
 			strings.ToUpper("Post"),
-			"/petstore/v2/pet",
+			"/v2/pet",
 			app.AddPet,
 		},
 
 		Route{
 			"DeletePet",
 			strings.ToUpper("Delete"),
-			"/petstore/v2/pet/{petId}",
+			"/v2/pet/{petId}",
 			app.DeletePet,
 		},
 
 		Route{
 			"FindPetsByStatus",
 			strings.ToUpper("Get"),
-			"/petstore/v2/pet/findByStatus",
+			"/v2/pet/findByStatus",
 			app.FindPetsByStatus,
 		},
 
 		Route{
 			"FindPetsByTags",
 			strings.ToUpper("Get"),
-			"/petstore/v2/pet/findByTags",
+			"/v2/pet/findByTags",
 			app.FindPetsByTags,
 		},
 
 		Route{
 			"GetPetById",
 			strings.ToUpper("Get"),
-			"/petstore/v2/pet/{petId}",
+			"/v2/pet/{petId}",
 			app.GetPetById,
 		},
 
 		Route{
 			"UpdatePet",
 			strings.ToUpper("Put"),
-			"/petstore/v2/pet",
+			"/v2/pet",
 			app.UpdatePet,
 		},
 
 		Route{
 			"UpdatePetWithForm",
 			strings.ToUpper("Post"),
-			"/petstore/v2/pet/{petId}",
+			"/v2/pet/{petId}",
 			app.UpdatePetWithForm,
 		},
 
 		Route{
 			"UploadFile",
 			strings.ToUpper("Post"),
-			"/petstore/v2/pet/{petId}/uploadImage",
+			"/v2/pet/{petId}/uploadImage",
 			app.UploadFile,
 		},
 
 		Route{
 			"DeleteOrder",
 			strings.ToUpper("Delete"),
-			"/petstore/v2/store/order/{orderId}",
+			"/v2/store/order/{orderId}",
 			app.DeleteOrder,
 		},
 
 		Route{
 			"GetInventory",
 			strings.ToUpper("Get"),
-			"/petstore/v2/store/inventory",
+			"/v2/store/inventory",
 			app.GetInventory,
 		},
 
 		Route{
 			"GetOrderById",
 			strings.ToUpper("Get"),
-			"/petstore/v2/store/order/{orderId}",
+			"/v2/store/order/{orderId}",
 			app.GetOrderById,
 		},
 
 		Route{
 			"PlaceOrder",
 			strings.ToUpper("Post"),
-			"/petstore/v2/store/order",
+			"/v2/store/order",
 			app.PlaceOrder,
 		},
 
 		Route{
 			"CreateUser",
 			strings.ToUpper("Post"),
-			"/petstore/v2/user",
+			"/v2/user",
 			app.CreateUser,
 		},
 
 		Route{
 			"CreateUsersWithArrayInput",
 			strings.ToUpper("Post"),
-			"/petstore/v2/user/createWithArray",
+			"/v2/user/createWithArray",
 			app.CreateUsersWithArrayInput,
 		},
 
 		Route{
 			"CreateUsersWithListInput",
 			strings.ToUpper("Post"),
-			"/petstore/v2/user/createWithList",
+			"/v2/user/createWithList",
 			app.CreateUsersWithListInput,
 		},
 
 		Route{
 			"DeleteUser",
 			strings.ToUpper("Delete"),
-			"/petstore/v2/user/{username}",
+			"/v2/user/{username}",
 			app.DeleteUser,
 		},
 
 		Route{
 			"GetUserByName",
 			strings.ToUpper("Get"),
-			"/petstore/v2/user/{username}",
+			"/v2/user/{username}",
 			app.GetUserByName,
 		},
 
 		Route{
 			"LoginUser",
 			strings.ToUpper("Get"),
-			"/petstore/v2/user/login",
+			"/v2/user/login",
 			app.LoginUser,
 		},
 
 		Route{
 			"LogoutUser",
 			strings.ToUpper("Get"),
-			"/petstore/v2/user/logout",
+			"/v2/user/logout",
 			app.LogoutUser,
 		},
 
 		Route{
 			"UpdateUser",
 			strings.ToUpper("Put"),
-			"/petstore/v2/user/{username}",
+			"/v2/user/{username}",
 			app.UpdateUser,
 		},
 		Route{
 			"GetAllUsers",
 			strings.ToUpper("Get"),
-			"/petstore/v2/user",
+			"/v2/user",
 			app.GetAllUsers,
 		},
 	}
@@ -190,18 +190,20 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = Logger(handler, route.Name)
 
 		router.
-			Methods(route.Method, "OPTIONS").
+			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
-
 	}
+
+	router.Use(app.Middleware)
+
 	// add metrics route
 	router.Handle("/metrics", MetricsHandler()).Methods("GET")
 
 	return router
 }
 
-func (app *Application) Index(w http.ResponseWriter, r *http.Request) {
+func (app *Application) Index(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprintf(w, "Welcome to the homepage!")
 }

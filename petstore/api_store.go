@@ -13,7 +13,6 @@ package petstore
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -30,7 +29,8 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("DeleteOrder::id is %s\n", vars["orderId"])
 	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
 	if err != nil {
-		panic(err)
+		app.ErrorResponse(w, http.StatusBadRequest, "Invalid order ID")
+		return
 	}
 
 	for index, order := range Orders {
@@ -39,19 +39,13 @@ func (app *Application) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
+	app.WriteJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-func (app *Application) GetInventory(w http.ResponseWriter, r *http.Request) {
+func (app *Application) GetInventory(w http.ResponseWriter, _ *http.Request) {
 
 	fmt.Println("GetInventory:: return all orders")
-	json.NewEncoder(w).Encode(Orders)
-
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
+	app.WriteJSON(w, http.StatusOK, Orders)
 }
 
 func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
@@ -60,41 +54,35 @@ func (app *Application) GetOrderById(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.ParseInt(vars["orderId"], 10, 32)
 	if err != nil {
-
-		panic(err)
+		app.ErrorResponse(w, http.StatusBadRequest, "Invalid order ID")
+		return
 	}
 	fmt.Printf("GetOrderById id: %d\n", id)
 
 	for _, order := range Orders {
 		if order.Id == id {
 			result = order
-
 		}
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	if reflect.ValueOf(result).IsZero() {
-		w.WriteHeader(http.StatusNotFound)
+		app.ErrorResponse(w, http.StatusNotFound, "Order not found")
 	} else {
-		json.NewEncoder(w).Encode(result)
-
+		app.WriteJSON(w, http.StatusOK, result)
 	}
 }
 
 func (app *Application) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 
-	// get the body of our POST request
-	// unmarshal this into a new Article struct
-	// append this to our Articles array.
-	reqBody, _ := io.ReadAll(r.Body)
 	var order Order
-	json.Unmarshal(reqBody, &order)
+	err := json.NewDecoder(r.Body).Decode(&order)
+	if err != nil {
+		app.ErrorResponse(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
 
 	// update our global Pets array to include
 	// our new Pet
 	Orders = append(Orders, order)
-	json.NewEncoder(w).Encode(order)
-
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	app.WriteJSON(w, http.StatusOK, order)
 }
