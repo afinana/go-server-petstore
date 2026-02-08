@@ -112,7 +112,6 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -165,8 +164,12 @@ func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Return empty array instead of null when no users found
+	if result == nil {
+		result = []User{}
+	}
+
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
-	w.WriteHeader(http.StatusOK)
 }

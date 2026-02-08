@@ -175,7 +175,6 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		json.NewEncoder(w).Encode(model)
-		w.WriteHeader(http.StatusOK)
 	}
 
 }
@@ -210,7 +209,6 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
 	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(m)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (app *Application) UpdatePetWithForm(w http.ResponseWriter, r *http.Request) {
