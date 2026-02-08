@@ -5,17 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch file",
+            "name": "LAUNCH FILE",
             "type": "go",
             "request": "launch",
-            "mode": "debug",          
+            "mode": "debug",
             "program": "${workspaceFolder}/main.go",
-            "args": [ 
-                "-enableCredentials=false",
-                "-mongoDatabase=petstore", 
-                "-mongoURI=mongodb://root:example@localhost:27017/petstore?authSource=admin"
-            ]
+            "env": {
+                "SERVER_ADDR": "localhost:8080",
+                "DATABASE_URI": "mongodb://root:example@localhost:27017/petstore?authSource=admin",
+                "DATABASE_NAME": "petstore",
+                "ENABLE_CREDENTIALS": "true"
+            }
         }
-
     ]
 }
