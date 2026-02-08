@@ -24,7 +24,27 @@ import (
 )
 
 func main() {
-	cfg := api.LoadConfig()
+
+	// Define command-line flags
+	serverAddr := os.Getenv("SERVER_ADDR")
+	if serverAddr == "" {
+		serverAddr = "localhost:8080"
+	}
+
+	mongoURI := os.Getenv("DATABASE_URI")
+	if mongoURI == "" {
+		mongoURI = "mongodb://localhost:27017"
+	}
+	mongoDatabase := os.Getenv("DATABASE_NAME")
+	if mongoDatabase == "" {
+		mongoDatabase = "petstore"
+	}
+
+	enableCredentialsEnv := os.Getenv("ENABLE_CREDENTIALS")
+	enableCredentials := false
+	if enableCredentialsEnv == "true" {
+		enableCredentials = true
+	}
 
 	// Create logger for writing information and error messages.
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
