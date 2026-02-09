@@ -51,16 +51,18 @@ func main() {
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// show config
-	infoLog.Printf("mongoURI: %s", cfg.MongoURI)
-	infoLog.Printf("mongoDatabase: %s", cfg.MongoDatabase)
-	infoLog.Printf("enableCredentials: %t", cfg.EnableCredentials)
+	infoLog.Printf("mongoURI: %s", mongoURI)
+	infoLog.Printf("mongoDatabase: %s", mongoDatabase)
+	infoLog.Printf("enableCredentials: %t", enableCredentials)
 
 	// Create mongo client configuration
-	co := options.Client().ApplyURI(cfg.MongoURI)
-	if cfg.EnableCredentials {
+	co := options.Client().ApplyURI(mongoURI)
+	if enableCredentials {
+		mongoUsername := os.Getenv("DATABASE_USERNAME")
+		mongoPassword := os.Getenv("DATABASE_PASSWORD")
 		co.Auth = &options.Credential{
-			Username: cfg.MongoUsername,
-			Password: cfg.MongoPassword,
+			Username: mongoUsername,
+			Password: mongoPassword,
 		}
 	}
 
@@ -88,19 +90,19 @@ func main() {
 		infoLog,
 		errLog,
 		&api.PetModel{
-			C: client.Database(cfg.MongoDatabase).Collection("pets"),
+			C: client.Database(mongoDatabase).Collection("pets"),
 		},
 		&api.StoreModel{
-			C: client.Database(cfg.MongoDatabase).Collection("stores"),
+			C: client.Database(mongoDatabase).Collection("stores"),
 		},
 		&api.UserModel{
-			C: client.Database(cfg.MongoDatabase).Collection("users"),
+			C: client.Database(mongoDatabase).Collection("users"),
 		},
 	)
 
 	// Initialize a new http.Server struct.
 	srv := &http.Server{
-		Addr:         cfg.ServerAddr,
+		Addr:         serverAddr,
 		ErrorLog:     errLog,
 		Handler:      app.NewRouter(),
 		IdleTimeout:  time.Minute,
@@ -108,7 +110,7 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
-	infoLog.Printf("Starting server on %s", cfg.ServerAddr)
+	infoLog.Printf("Starting server on %s", serverAddr)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errLog.Fatalf("Server failed to start: %v", err)

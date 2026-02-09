@@ -79,7 +79,6 @@ func (app *Application) GetUserByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
 }
 
@@ -122,6 +121,5 @@ func (app *Application) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
 	json.NewEncoder(w).Encode(result)
 }

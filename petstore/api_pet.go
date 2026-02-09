@@ -118,14 +118,7 @@ func (app *Application) GetPetById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	if reflect.ValueOf(model).IsZero() {
-		w.WriteHeader(http.StatusNotFound)
-	} else {
-		json.NewEncoder(w).Encode(model)
-	}
-
+	app.WriteJSON(w, http.StatusOK, model)
 }
 
 func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
@@ -147,10 +140,7 @@ func (app *Application) UpdatePet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.infoLog.Printf("Pet has been updated, upserted_id=%v \n", updateResult.UpsertedID)
-
-	w.Header().Set("Content-Type", "Application/json; charset=UTF-8")
-	app.enableCors(w, r)
-	json.NewEncoder(w).Encode(m)
+	app.WriteJSON(w, http.StatusOK, m)
 }
 
 func (app *Application) UpdatePetWithForm(w http.ResponseWriter, _ *http.Request) {
