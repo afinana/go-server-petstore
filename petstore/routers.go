@@ -189,6 +189,11 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = route.HandlerFunc
 		handler = Logger(handler, route.Name)
 
+		// Protect all routes except Index and LoginUser
+		if route.Name != "Index" && route.Name != "LoginUser" {
+			handler = app.AuthMiddleware(handler)
+		}
+
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
