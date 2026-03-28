@@ -23,11 +23,11 @@ func Logger(inner http.Handler, name string) http.Handler {
 		inner.ServeHTTP(w, r)
 
 		log.Printf(
-			"%s %s %s %s",
-			r.Method,
-			r.RequestURI,
+			"%s%s%s %s%s%s %s %s%s%s",
+			Green, r.Method, Reset,
+			Cyan, r.RequestURI, Reset,
 			name,
-			time.Since(start),
+			Yellow, time.Since(start), Reset,
 		)
 	})
 }

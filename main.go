@@ -47,8 +47,8 @@ func main() {
 	}
 
 	// Create logger for writing information and error messages.
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	infoLog := log.New(os.Stdout, api.Green+"INFO\t"+api.Reset, log.Ldate|log.Ltime)
+	errLog := log.New(os.Stderr, api.Red+"ERROR\t"+api.Reset, log.Ldate|log.Ltime|log.Lshortfile)
 
 	// show config
 	infoLog.Printf("mongoURI: %s", mongoURI)
