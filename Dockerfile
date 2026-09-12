@@ -1,33 +1,35 @@
-## Build
-FROM golang:1.25 AS build
+## Build Stage
+FROM golang:1.25-alpine AS build
 
 WORKDIR /app
 
-# Copy go mod and sum files
+# Install ca-certificates for secure outbound calls
+RUN apk --no-cache add ca-certificates
+
+# Cache dependencies first (improves build caching)
 COPY go.mod go.sum ./
-
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/engine/reference/builder/#copy
-COPY petstore ./petstore
-COPY main.go .
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /go-server-petstore
+# Copy source code
+COPY petstore/ ./petstore/
+COPY main.go .
 
-## Deploy
-##FROM gcr.io/distroless/base-debian11
+# Build static binary with stripped debug symbols
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /go-server-petstore main.go
+
+## Production Stage (Minimal & Secure)
 FROM scratch
 
-# Set the Current Working Directory inside the container
-WORKDIR /
+# Import ca-certificates from builder
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+# Copy binary from builder
 COPY --from=build /go-server-petstore /go-server-petstore
 
-# Expose port 8080 to the outside world
+# Run as non-root user (nobody:nobody)
+USER 65534:65534
+
+# Expose port
 EXPOSE 8080
 
-# Command to run the executable
 ENTRYPOINT ["/go-server-petstore"]

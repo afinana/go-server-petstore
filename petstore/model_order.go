@@ -24,4 +24,5 @@ type Order struct {
 	// Order Status
 	Status   string `json:"status,omitempty"`
 	Complete bool   `json:"complete,omitempty"`
+	UserId   string `json:"userId,omitempty" bson:"userId,omitempty"`
 }

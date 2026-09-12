@@ -210,5 +210,5 @@ func (app *Application) NewRouter() *mux.Router {
 }
 
 func (app *Application) Index(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintf(w, "Welcome to the homepage!")
+	_, _ = fmt.Fprintf(w, "Welcome to the homepage!")
 }

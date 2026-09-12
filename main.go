@@ -40,10 +40,13 @@ func main() {
 		mongoDatabase = "petstore"
 	}
 
-	enableCredentialsEnv := os.Getenv("ENABLE_CREDENTIALS")
-	enableCredentials := false
-	if enableCredentialsEnv == "true" {
-		enableCredentials = true
+	enableCredentials := os.Getenv("ENABLE_CREDENTIALS") == "true"
+
+	enableAuthValidation := true
+	if val := os.Getenv("ENABLE_AUTH_VALIDATION"); val != "" {
+		enableAuthValidation = val != "false" && val != "0" && val != "off" && val != "no"
+	} else if val := os.Getenv("ENABLE_HEADER_VALIDATION"); val != "" {
+		enableAuthValidation = val != "false" && val != "0" && val != "off" && val != "no"
 	}
 
 	// Create logger for writing information and error messages.
@@ -54,6 +57,7 @@ func main() {
 	infoLog.Printf("mongoURI: %s", mongoURI)
 	infoLog.Printf("mongoDatabase: %s", mongoDatabase)
 	infoLog.Printf("enableCredentials: %t", enableCredentials)
+	infoLog.Printf("enableAuthValidation: %t", enableAuthValidation)
 
 	// Create mongo client configuration
 	co := options.Client().ApplyURI(mongoURI)
@@ -99,6 +103,7 @@ func main() {
 			C: client.Database(mongoDatabase).Collection("users"),
 		},
 	)
+	app.SetAuthValidationEnabled(enableAuthValidation)
 
 	// Initialize a new http.Server struct.
 	srv := &http.Server{

@@ -2,92 +2,188 @@ package petstore
 
 import (
 	"context"
-	"log"
+	"crypto/subtle"
 	"net/http"
+	"os"
 	"strings"
-
-	"github.com/MicahParks/keyfunc/v3"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // Auth context key type
 type contextKey string
 
 const (
+	AuthUserKey   = contextKey("authUser")
 	UserClaimsKey = contextKey("userClaims")
 )
 
-// jwks caches the Google public keys
-var jwks keyfunc.Keyfunc
-
-func init() {
-	var err error
-	googleCertsURL := "https://www.googleapis.com/oauth2/v3/certs"
-	jwks, err = keyfunc.NewDefault([]string{googleCertsURL})
-	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
-	}
+// AuthUser represents an authenticated caller whose identity has been verified
+// by the API gateway (e.g. KrakenD) and forwarded downstream.
+type AuthUser struct {
+	ID    string   `json:"id"`
+	Roles []string `json:"roles"`
+	Email string   `json:"email"`
 }
 
-// AuthMiddleware validates a Google JWT in the Authorization header.
+// HasRole checks if the user possesses a specific role (case-insensitive).
+func (u *AuthUser) HasRole(role string) bool {
+	if u == nil {
+		return false
+	}
+	for _, r := range u.Roles {
+		if strings.EqualFold(strings.TrimSpace(r), role) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsAdmin checks if the user has the 'admin' role.
+func (u *AuthUser) IsAdmin() bool {
+	return u.HasRole("admin")
+}
+
+// CanManageResource checks resource-level ownership (ABAC).
+// An admin can manage any resource; a standard user can only manage
+// resources they own or unowned legacy resources.
+func (u *AuthUser) CanManageResource(resourceOwnerID string) bool {
+	if u == nil {
+		return false
+	}
+	if u.IsAdmin() {
+		return true
+	}
+	if resourceOwnerID == "" {
+		// If resource has no owner, allow access
+		return true
+	}
+	return u.ID == resourceOwnerID
+}
+
+// GetAuthUser retrieves the authenticated user from the request context.
+func GetAuthUser(ctx context.Context) (*AuthUser, bool) {
+	if ctx == nil {
+		return nil, false
+	}
+	user, ok := ctx.Value(AuthUserKey).(*AuthUser)
+	return user, ok && user != nil && user.ID != ""
+}
+
+// AuthMiddleware extracts authenticated user identity forwarded by the API Gateway (KrakenD).
+// When validation is enabled (default), it strictly validates that the request contains
+// required gateway identity headers (X-User-Id, X-User-Roles, X-User-Email) and passes
+// the optional gateway secret check (X-Gateway-Secret).
+//
+// When validation is disabled via configuration (ENABLE_AUTH_VALIDATION=false or app.SetAuthValidationEnabled(false)),
+// requests without gateway headers are not rejected; instead, a default permissive development user is used.
 func (app *Application) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header is required", http.StatusUnauthorized)
+		validationEnabled := app.IsAuthValidationEnabled()
+
+		if validationEnabled {
+			// 1. Defense-in-depth: verify gateway secret if configured
+			expectedSecret := os.Getenv("GATEWAY_SECRET")
+			if expectedSecret != "" {
+				providedSecret := r.Header.Get("X-Gateway-Secret")
+				if providedSecret == "" || subtle.ConstantTimeCompare([]byte(providedSecret), []byte(expectedSecret)) != 1 {
+					http.Error(w, "Unauthorized: missing or invalid gateway secret", http.StatusUnauthorized)
+					return
+				}
+			}
+
+			// 2. Extract identity forwarded by the API Gateway
+			userID := strings.TrimSpace(r.Header.Get("X-User-Id"))
+			if userID == "" {
+				userID = strings.TrimSpace(r.Header.Get("X-Forwarded-User"))
+			}
+
+			// If no user identity header is present, reject with 401 Unauthorized
+			if userID == "" {
+				http.Error(w, "Unauthorized: missing gateway identity headers", http.StatusUnauthorized)
+				return
+			}
+
+			// 3. Extract roles
+			roleHeader := r.Header.Get("X-User-Roles")
+			if roleHeader == "" {
+				roleHeader = r.Header.Get("X-User-Role")
+			}
+			var roles []string
+			if roleHeader != "" {
+				for _, role := range strings.Split(roleHeader, ",") {
+					if trimmed := strings.TrimSpace(role); trimmed != "" {
+						roles = append(roles, trimmed)
+					}
+				}
+			}
+
+			// 4. Extract email
+			email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+
+			authUser := &AuthUser{
+				ID:    userID,
+				Roles: roles,
+				Email: email,
+			}
+
+			// Store AuthUser in context
+			ctx := context.WithValue(r.Context(), AuthUserKey, authUser)
+
+			// Populate UserClaimsKey map for backwards compatibility
+			claimsMap := map[string]interface{}{
+				"sub":   userID,
+				"roles": roles,
+				"email": email,
+			}
+			ctx = context.WithValue(ctx, UserClaimsKey, claimsMap)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
-			return
+		// --- Validation is DISABLED (Bypass / Development mode) ---
+		userID := strings.TrimSpace(r.Header.Get("X-User-Id"))
+		if userID == "" {
+			userID = strings.TrimSpace(r.Header.Get("X-Forwarded-User"))
+		}
+		if userID == "" {
+			userID = "dev-user"
 		}
 
-		tokenString := parts[1]
-
-		token, err := jwt.Parse(tokenString, jwks.Keyfunc)
-
-		if err != nil {
-			log.Printf("Failed to parse the JWT.\nError: %s", err.Error())
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
-			return
+		roleHeader := r.Header.Get("X-User-Roles")
+		if roleHeader == "" {
+			roleHeader = r.Header.Get("X-User-Role")
 		}
-
-		if !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
-			return
-		}
-
-		// Validate issuer
-		validIssuers := []string{"https://accounts.google.com", "accounts.google.com"}
-		issuer, ok := claims["iss"].(string)
-		if !ok {
-			http.Error(w, "Missing issuer claim", http.StatusUnauthorized)
-			return
-		}
-
-		isValidIssuer := false
-		for _, v := range validIssuers {
-			if issuer == v {
-				isValidIssuer = true
-				break
+		var roles []string
+		if roleHeader != "" {
+			for _, role := range strings.Split(roleHeader, ",") {
+				if trimmed := strings.TrimSpace(role); trimmed != "" {
+					roles = append(roles, trimmed)
+				}
 			}
 		}
-
-		if !isValidIssuer {
-			http.Error(w, "Invalid token issuer", http.StatusUnauthorized)
-			return
+		if len(roles) == 0 {
+			roles = []string{"admin"} // Grant admin privileges when auth validation is disabled
 		}
 
-		// Authentication is successful, store claims in context
-		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
+		email := strings.TrimSpace(r.Header.Get("X-User-Email"))
+		if email == "" {
+			email = "dev@local"
+		}
+
+		authUser := &AuthUser{
+			ID:    userID,
+			Roles: roles,
+			Email: email,
+		}
+
+		ctx := context.WithValue(r.Context(), AuthUserKey, authUser)
+		claimsMap := map[string]interface{}{
+			"sub":   userID,
+			"roles": roles,
+			"email": email,
+		}
+		ctx = context.WithValue(ctx, UserClaimsKey, claimsMap)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
