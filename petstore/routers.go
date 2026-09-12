@@ -189,6 +189,11 @@ func (app *Application) NewRouter() *mux.Router {
 		handler = route.HandlerFunc
 		handler = Logger(handler, route.Name)
 
+		// Protect all routes except Index and LoginUser
+		if route.Name != "Index" && route.Name != "LoginUser" {
+			handler = app.AuthMiddleware(handler)
+		}
+
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
@@ -205,5 +210,5 @@ func (app *Application) NewRouter() *mux.Router {
 }
 
 func (app *Application) Index(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintf(w, "Welcome to the homepage!")
+	_, _ = fmt.Fprintf(w, "Welcome to the homepage!")
 }

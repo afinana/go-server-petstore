@@ -687,6 +687,9 @@ definitions:
         - "available"
         - "pending"
         - "sold"
+      ownerId:
+        type: "string"
+        description: "Identifier of the user who owns this pet"
     xml:
       name: "Pet"
     example:
@@ -741,6 +744,9 @@ definitions:
         - "delivered"
       complete:
         type: "boolean"
+      userId:
+        type: "string"
+        description: "Identifier of the user who placed this order"
     xml:
       name: "Order"
     example:

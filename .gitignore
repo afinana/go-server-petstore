@@ -25,3 +25,8 @@ go-petstore-workspace.code-workspace
 go.mod
 go.sum
 
+go-server-petstore
+__debug_bin*
+go-server-petstore
+swaggerapi
+.github/copilot-instructions.md
